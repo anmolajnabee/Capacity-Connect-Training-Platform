@@ -13,60 +13,7 @@ from app.components.cards import (
 )
 from app.components.layout import page_shell, section_heading
 from app.components.pathway import pathway_panel
-from app.components.trainee_ui import chip
-from app.components.workflow_map import workflow_map
 from app.states.public_state import PublicState
-
-
-def _workflow_section() -> rx.Component:
-    return rx.el.section(
-        rx.el.div(
-            section_heading(
-                "Why one registry",
-                "Fragmented process → connected workflow",
-                "The problems capacity building runs into, and the part of this registry that now carries each one. Figures read live from the registry.",
-            ),
-            workflow_map(
-                rx.el.div(
-                    chip(
-                        f"{PublicState.stats['courses']} published courses",
-                        "teal",
-                    ),
-                    chip(
-                        f"{PublicState.stats['trainers']} approved trainers",
-                        "navy",
-                    ),
-                    chip(
-                        f"{PublicState.stats['trainees']} trainees",
-                        "teal",
-                    ),
-                    chip(
-                        f"{PublicState.stats['enrollments']} active enrolments",
-                        "navy",
-                    ),
-                    chip(
-                        f"{PublicState.stats['resources']} learning resources",
-                        "teal",
-                    ),
-                    chip(
-                        f"{PublicState.stats['assessments']} assessments",
-                        "navy",
-                    ),
-                    chip(
-                        f"{PublicState.stats['skills']} skills tracked",
-                        "amber",
-                    ),
-                    chip(
-                        f"{PublicState.stats['certificates']} certificates issued",
-                        "green",
-                    ),
-                    class_name="flex w-full flex-wrap items-center gap-2",
-                )
-            ),
-            class_name="mx-auto flex w-full max-w-7xl flex-col gap-6 px-4 py-12 sm:px-6",
-        ),
-        class_name="w-full border-y border-slate-200 bg-[#FBFAF7]",
-    )
 
 
 def _console_header() -> rx.Component:
@@ -324,7 +271,6 @@ def home_page() -> rx.Component:
     return page_shell(
         _console_header(),
         pathway_panel(),
-        _workflow_section(),
         _stat_band(),
         _featured_courses(),
         _featured_trainers(),

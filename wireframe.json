@@ -1,0 +1,707 @@
+{
+  "version": 4,
+  "app_title": "CAPACITY CONNECT Plan",
+  "nav": {
+    "placement": "none",
+    "items": []
+  },
+  "pages": [
+    {
+      "id": "page-9e681b8a",
+      "name": "Public Home",
+      "route": "/",
+      "item_ref": {
+        "index": 0,
+        "text": "Set up a persistent database for accounts, profiles, skills, courses, resources, enrollments, assessments, results, certificates, feedback, approvals, and announcements; deliver secure email/password signup, login, reset-password flow, role-aware access, and public Home, About, Courses, Trainers, and Announcements pages. Design direction: an institutional learning-command-center aesthetic inspired by meteorological charts and competency matrices, using deep navy, monsoon teal, saffron status accents, crisp humanist typography, dense but calm information layouts, and a skills-to-training pathway visualization as the signature centerpiece."
+      },
+      "blocks": [
+        {
+          "id": "public-nav",
+          "type": "nav",
+          "label": "Public navigation",
+          "hint": "CAPACITY CONNECT brand with Home, About, Courses, Trainers, Announcements, Login, and Signup",
+          "x": 0,
+          "y": 0,
+          "w": 12,
+          "h": 1,
+          "item_ref": {
+            "index": 0,
+            "text": "Set up a persistent database for accounts, profiles, skills, courses, resources, enrollments, assessments, results, certificates, feedback, approvals, and announcements; deliver secure email/password signup, login, reset-password flow, role-aware access, and public Home, About, Courses, Trainers, and Announcements pages. Design direction: an institutional learning-command-center aesthetic inspired by meteorological charts and competency matrices, using deep navy, monsoon teal, saffron status accents, crisp humanist typography, dense but calm information layouts, and a skills-to-training pathway visualization as the signature centerpiece."
+          },
+          "type_source": "palette"
+        },
+        {
+          "id": "home-hero",
+          "type": "hero",
+          "label": "Capacity-building pathway",
+          "hint": "Institutional introduction paired with a visual Course → Trainer → Learning → Assessment → Certificate pathway",
+          "x": 0,
+          "y": 1,
+          "w": 12,
+          "h": 4,
+          "item_ref": {
+            "index": 0,
+            "text": "Set up a persistent database for accounts, profiles, skills, courses, resources, enrollments, assessments, results, certificates, feedback, approvals, and announcements; deliver secure email/password signup, login, reset-password flow, role-aware access, and public Home, About, Courses, Trainers, and Announcements pages. Design direction: an institutional learning-command-center aesthetic inspired by meteorological charts and competency matrices, using deep navy, monsoon teal, saffron status accents, crisp humanist typography, dense but calm information layouts, and a skills-to-training pathway visualization as the signature centerpiece."
+          },
+          "type_source": "palette"
+        },
+        {
+          "id": "home-announcements",
+          "type": "list",
+          "label": "Announcements and new learning",
+          "hint": "Recent announcements, achievements, and newly uploaded content",
+          "x": 0,
+          "y": 5,
+          "w": 5,
+          "h": 4,
+          "item_ref": {
+            "index": 0,
+            "text": "Set up a persistent database for accounts, profiles, skills, courses, resources, enrollments, assessments, results, certificates, feedback, approvals, and announcements; deliver secure email/password signup, login, reset-password flow, role-aware access, and public Home, About, Courses, Trainers, and Announcements pages. Design direction: an institutional learning-command-center aesthetic inspired by meteorological charts and competency matrices, using deep navy, monsoon teal, saffron status accents, crisp humanist typography, dense but calm information layouts, and a skills-to-training pathway visualization as the signature centerpiece."
+          },
+          "type_source": "palette"
+        },
+        {
+          "id": "home-courses",
+          "type": "text",
+          "label": "Featured courses",
+          "hint": "Available courses with trainer, level, skill tags, and view action",
+          "x": 5,
+          "y": 5,
+          "w": 7,
+          "h": 4,
+          "item_ref": {
+            "index": 0,
+            "text": "Set up a persistent database for accounts, profiles, skills, courses, resources, enrollments, assessments, results, certificates, feedback, approvals, and announcements; deliver secure email/password signup, login, reset-password flow, role-aware access, and public Home, About, Courses, Trainers, and Announcements pages. Design direction: an institutional learning-command-center aesthetic inspired by meteorological charts and competency matrices, using deep navy, monsoon teal, saffron status accents, crisp humanist typography, dense but calm information layouts, and a skills-to-training pathway visualization as the signature centerpiece."
+          },
+          "type_source": "palette"
+        },
+        {
+          "id": "public-footer",
+          "type": "footer",
+          "label": "Public footer",
+          "hint": "About, support, accessibility, and platform links",
+          "x": 0,
+          "y": 9,
+          "w": 12,
+          "h": 2,
+          "item_ref": {
+            "index": 0,
+            "text": "Set up a persistent database for accounts, profiles, skills, courses, resources, enrollments, assessments, results, certificates, feedback, approvals, and announcements; deliver secure email/password signup, login, reset-password flow, role-aware access, and public Home, About, Courses, Trainers, and Announcements pages. Design direction: an institutional learning-command-center aesthetic inspired by meteorological charts and competency matrices, using deep navy, monsoon teal, saffron status accents, crisp humanist typography, dense but calm information layouts, and a skills-to-training pathway visualization as the signature centerpiece."
+          },
+          "type_source": "palette"
+        }
+      ],
+      "deleted_ids": []
+    },
+    {
+      "id": "page-ef7d6831",
+      "name": "Login and Signup",
+      "route": "/login",
+      "item_ref": {
+        "index": 0,
+        "text": "Set up a persistent database for accounts, profiles, skills, courses, resources, enrollments, assessments, results, certificates, feedback, approvals, and announcements; deliver secure email/password signup, login, reset-password flow, role-aware access, and public Home, About, Courses, Trainers, and Announcements pages. Design direction: an institutional learning-command-center aesthetic inspired by meteorological charts and competency matrices, using deep navy, monsoon teal, saffron status accents, crisp humanist typography, dense but calm information layouts, and a skills-to-training pathway visualization as the signature centerpiece."
+      },
+      "blocks": [
+        {
+          "id": "auth-nav",
+          "type": "nav",
+          "label": "Public navigation",
+          "hint": "Compact CAPACITY CONNECT navigation",
+          "x": 0,
+          "y": 0,
+          "w": 12,
+          "h": 1,
+          "item_ref": {
+            "index": 0,
+            "text": "Set up a persistent database for accounts, profiles, skills, courses, resources, enrollments, assessments, results, certificates, feedback, approvals, and announcements; deliver secure email/password signup, login, reset-password flow, role-aware access, and public Home, About, Courses, Trainers, and Announcements pages. Design direction: an institutional learning-command-center aesthetic inspired by meteorological charts and competency matrices, using deep navy, monsoon teal, saffron status accents, crisp humanist typography, dense but calm information layouts, and a skills-to-training pathway visualization as the signature centerpiece."
+          },
+          "type_source": "palette"
+        },
+        {
+          "id": "login-form",
+          "type": "form",
+          "label": "Secure account access",
+          "hint": "Email/password login with validation, forgot password, status messaging, and signup link",
+          "x": 0,
+          "y": 1,
+          "w": 5,
+          "h": 6,
+          "item_ref": {
+            "index": 0,
+            "text": "Set up a persistent database for accounts, profiles, skills, courses, resources, enrollments, assessments, results, certificates, feedback, approvals, and announcements; deliver secure email/password signup, login, reset-password flow, role-aware access, and public Home, About, Courses, Trainers, and Announcements pages. Design direction: an institutional learning-command-center aesthetic inspired by meteorological charts and competency matrices, using deep navy, monsoon teal, saffron status accents, crisp humanist typography, dense but calm information layouts, and a skills-to-training pathway visualization as the signature centerpiece."
+          },
+          "type_source": "palette"
+        },
+        {
+          "id": "auth-overview",
+          "type": "text",
+          "label": "Role-aware platform overview",
+          "hint": "Illustrated overview of trainee, trainer, and admin journeys",
+          "x": 5,
+          "y": 1,
+          "w": 7,
+          "h": 6,
+          "item_ref": {
+            "index": 0,
+            "text": "Set up a persistent database for accounts, profiles, skills, courses, resources, enrollments, assessments, results, certificates, feedback, approvals, and announcements; deliver secure email/password signup, login, reset-password flow, role-aware access, and public Home, About, Courses, Trainers, and Announcements pages. Design direction: an institutional learning-command-center aesthetic inspired by meteorological charts and competency matrices, using deep navy, monsoon teal, saffron status accents, crisp humanist typography, dense but calm information layouts, and a skills-to-training pathway visualization as the signature centerpiece."
+          },
+          "type_source": "palette"
+        }
+      ],
+      "deleted_ids": []
+    },
+    {
+      "id": "page-7d8eb673",
+      "name": "Trainee Dashboard",
+      "route": "/trainee",
+      "item_ref": {
+        "index": 1,
+        "text": "Build the complete trainee workspace with professional profile and skill meters, qualifications and experience records, discoverable course enrollment, structured learning resources, assessment-taking and scored results, certificate records, progress tracking, and post-course feedback with validation and responsive empty/loading/success states."
+      },
+      "blocks": [
+        {
+          "id": "trainee-sidebar",
+          "type": "sidebar",
+          "label": "Trainee navigation",
+          "hint": "Dashboard, Profile, Courses, My Learning, Resources, Assessments, Results, Certificates, Feedback, Logout",
+          "x": 0,
+          "y": 0,
+          "w": 3,
+          "h": 10,
+          "item_ref": {
+            "index": 1,
+            "text": "Build the complete trainee workspace with professional profile and skill meters, qualifications and experience records, discoverable course enrollment, structured learning resources, assessment-taking and scored results, certificate records, progress tracking, and post-course feedback with validation and responsive empty/loading/success states."
+          },
+          "type_source": "palette"
+        },
+        {
+          "id": "trainee-header",
+          "type": "header",
+          "label": "Learning overview",
+          "hint": "Welcome, profile completion, notifications, and next learning action",
+          "x": 3,
+          "y": 0,
+          "w": 9,
+          "h": 2,
+          "item_ref": {
+            "index": 1,
+            "text": "Build the complete trainee workspace with professional profile and skill meters, qualifications and experience records, discoverable course enrollment, structured learning resources, assessment-taking and scored results, certificate records, progress tracking, and post-course feedback with validation and responsive empty/loading/success states."
+          },
+          "type_source": "palette"
+        },
+        {
+          "id": "trainee-stats",
+          "type": "kpi",
+          "label": "Progress summary",
+          "hint": "Enrolled courses, completion, assessments, and certificates",
+          "x": 3,
+          "y": 2,
+          "w": 9,
+          "h": 2,
+          "item_ref": {
+            "index": 1,
+            "text": "Build the complete trainee workspace with professional profile and skill meters, qualifications and experience records, discoverable course enrollment, structured learning resources, assessment-taking and scored results, certificate records, progress tracking, and post-course feedback with validation and responsive empty/loading/success states."
+          },
+          "type_source": "palette"
+        },
+        {
+          "id": "trainee-learning",
+          "type": "card_grid",
+          "label": "My learning",
+          "hint": "Course cards with progress, next lesson, and assessment status",
+          "x": 3,
+          "y": 4,
+          "w": 6,
+          "h": 4,
+          "item_ref": {
+            "index": 1,
+            "text": "Build the complete trainee workspace with professional profile and skill meters, qualifications and experience records, discoverable course enrollment, structured learning resources, assessment-taking and scored results, certificate records, progress tracking, and post-course feedback with validation and responsive empty/loading/success states."
+          },
+          "type_source": "palette"
+        },
+        {
+          "id": "trainee-skills",
+          "type": "chart_bar",
+          "label": "Skill profile",
+          "hint": "Visible horizontal bars for professional skill proficiency",
+          "x": 9,
+          "y": 4,
+          "w": 3,
+          "h": 4,
+          "item_ref": {
+            "index": 1,
+            "text": "Build the complete trainee workspace with professional profile and skill meters, qualifications and experience records, discoverable course enrollment, structured learning resources, assessment-taking and scored results, certificate records, progress tracking, and post-course feedback with validation and responsive empty/loading/success states."
+          },
+          "type_source": "palette"
+        },
+        {
+          "id": "trainee-upcoming",
+          "type": "list",
+          "label": "Upcoming work",
+          "hint": "Assessment deadlines and recent announcements",
+          "x": 3,
+          "y": 8,
+          "w": 9,
+          "h": 3,
+          "item_ref": {
+            "index": 1,
+            "text": "Build the complete trainee workspace with professional profile and skill meters, qualifications and experience records, discoverable course enrollment, structured learning resources, assessment-taking and scored results, certificate records, progress tracking, and post-course feedback with validation and responsive empty/loading/success states."
+          },
+          "type_source": "palette"
+        }
+      ],
+      "deleted_ids": []
+    },
+    {
+      "id": "page-4133c5d5",
+      "name": "Course Learning and Assessment",
+      "route": "/trainee/courses",
+      "item_ref": {
+        "index": 1,
+        "text": "Build the complete trainee workspace with professional profile and skill meters, qualifications and experience records, discoverable course enrollment, structured learning resources, assessment-taking and scored results, certificate records, progress tracking, and post-course feedback with validation and responsive empty/loading/success states."
+      },
+      "blocks": [
+        {
+          "id": "trainee-course-sidebar",
+          "type": "sidebar",
+          "label": "Trainee navigation",
+          "hint": "Persistent trainee workspace navigation",
+          "x": 0,
+          "y": 0,
+          "w": 3,
+          "h": 10,
+          "item_ref": {
+            "index": 1,
+            "text": "Build the complete trainee workspace with professional profile and skill meters, qualifications and experience records, discoverable course enrollment, structured learning resources, assessment-taking and scored results, certificate records, progress tracking, and post-course feedback with validation and responsive empty/loading/success states."
+          },
+          "type_source": "palette"
+        },
+        {
+          "id": "course-filters",
+          "type": "text",
+          "label": "Course discovery controls",
+          "hint": "Search and filter by subject, level, trainer, and enrollment status",
+          "x": 3,
+          "y": 0,
+          "w": 9,
+          "h": 2,
+          "item_ref": {
+            "index": 1,
+            "text": "Build the complete trainee workspace with professional profile and skill meters, qualifications and experience records, discoverable course enrollment, structured learning resources, assessment-taking and scored results, certificate records, progress tracking, and post-course feedback with validation and responsive empty/loading/success states."
+          },
+          "type_source": "palette"
+        },
+        {
+          "id": "course-catalog",
+          "type": "text",
+          "label": "Course catalog",
+          "hint": "Enroll and open courses with trainer and required skill context",
+          "x": 3,
+          "y": 2,
+          "w": 5,
+          "h": 6,
+          "item_ref": {
+            "index": 1,
+            "text": "Build the complete trainee workspace with professional profile and skill meters, qualifications and experience records, discoverable course enrollment, structured learning resources, assessment-taking and scored results, certificate records, progress tracking, and post-course feedback with validation and responsive empty/loading/success states."
+          },
+          "type_source": "palette"
+        },
+        {
+          "id": "learning-resources",
+          "type": "list",
+          "label": "Structured learning resources",
+          "hint": "Modules with videos, PDFs, presentations, notes, completion state, and download actions",
+          "x": 8,
+          "y": 2,
+          "w": 4,
+          "h": 6,
+          "item_ref": {
+            "index": 1,
+            "text": "Build the complete trainee workspace with professional profile and skill meters, qualifications and experience records, discoverable course enrollment, structured learning resources, assessment-taking and scored results, certificate records, progress tracking, and post-course feedback with validation and responsive empty/loading/success states."
+          },
+          "type_source": "palette"
+        },
+        {
+          "id": "trainee-assessment",
+          "type": "form",
+          "label": "MCQ assessment and feedback",
+          "hint": "Question navigation, answer selection, submission, scored result, certificate state, and course rating",
+          "x": 3,
+          "y": 8,
+          "w": 9,
+          "h": 5,
+          "item_ref": {
+            "index": 1,
+            "text": "Build the complete trainee workspace with professional profile and skill meters, qualifications and experience records, discoverable course enrollment, structured learning resources, assessment-taking and scored results, certificate records, progress tracking, and post-course feedback with validation and responsive empty/loading/success states."
+          },
+          "type_source": "palette"
+        }
+      ],
+      "deleted_ids": []
+    },
+    {
+      "id": "page-9b85dd96",
+      "name": "Trainer Dashboard",
+      "route": "/trainer",
+      "item_ref": {
+        "index": 2,
+        "text": "Build the complete trainer workspace with professional expertise profile, course and trainee oversight, resource library and content uploads, questionnaire/MCQ authoring with deadlines and time limits, participation tracking, and performance views that distinguish high-performing, at-risk, inactive, and incomplete trainees."
+      },
+      "blocks": [
+        {
+          "id": "trainer-sidebar",
+          "type": "sidebar",
+          "label": "Trainer navigation",
+          "hint": "Dashboard, Profile, My Courses, Assessments, Trainees, Performance, Library, Upload, Logout",
+          "x": 0,
+          "y": 0,
+          "w": 3,
+          "h": 11,
+          "item_ref": {
+            "index": 2,
+            "text": "Build the complete trainer workspace with professional expertise profile, course and trainee oversight, resource library and content uploads, questionnaire/MCQ authoring with deadlines and time limits, participation tracking, and performance views that distinguish high-performing, at-risk, inactive, and incomplete trainees."
+          },
+          "type_source": "palette"
+        },
+        {
+          "id": "trainer-header",
+          "type": "header",
+          "label": "Trainer command view",
+          "hint": "Welcome, expertise summary, deadlines, and quick create/upload actions",
+          "x": 3,
+          "y": 0,
+          "w": 9,
+          "h": 2,
+          "item_ref": {
+            "index": 2,
+            "text": "Build the complete trainer workspace with professional expertise profile, course and trainee oversight, resource library and content uploads, questionnaire/MCQ authoring with deadlines and time limits, participation tracking, and performance views that distinguish high-performing, at-risk, inactive, and incomplete trainees."
+          },
+          "type_source": "palette"
+        },
+        {
+          "id": "trainer-stats",
+          "type": "kpi",
+          "label": "Teaching metrics",
+          "hint": "Courses, trainees, assessments, average score, and deadlines",
+          "x": 3,
+          "y": 2,
+          "w": 9,
+          "h": 2,
+          "item_ref": {
+            "index": 2,
+            "text": "Build the complete trainer workspace with professional expertise profile, course and trainee oversight, resource library and content uploads, questionnaire/MCQ authoring with deadlines and time limits, participation tracking, and performance views that distinguish high-performing, at-risk, inactive, and incomplete trainees."
+          },
+          "type_source": "palette"
+        },
+        {
+          "id": "trainer-performance",
+          "type": "table",
+          "label": "Trainee performance",
+          "hint": "Scores, completion, status, and risk indicators with filters",
+          "x": 3,
+          "y": 4,
+          "w": 6,
+          "h": 5,
+          "item_ref": {
+            "index": 2,
+            "text": "Build the complete trainer workspace with professional expertise profile, course and trainee oversight, resource library and content uploads, questionnaire/MCQ authoring with deadlines and time limits, participation tracking, and performance views that distinguish high-performing, at-risk, inactive, and incomplete trainees."
+          },
+          "type_source": "palette"
+        },
+        {
+          "id": "trainer-chart",
+          "type": "chart_bar",
+          "label": "Course outcomes",
+          "hint": "Visible bars comparing completion and average assessment performance",
+          "x": 9,
+          "y": 4,
+          "w": 3,
+          "h": 5,
+          "item_ref": {
+            "index": 2,
+            "text": "Build the complete trainer workspace with professional expertise profile, course and trainee oversight, resource library and content uploads, questionnaire/MCQ authoring with deadlines and time limits, participation tracking, and performance views that distinguish high-performing, at-risk, inactive, and incomplete trainees."
+          },
+          "type_source": "palette"
+        },
+        {
+          "id": "trainer-library",
+          "type": "list",
+          "label": "Trainer library",
+          "hint": "Subject-grouped videos, PDFs, presentations, notes, and visibility status",
+          "x": 3,
+          "y": 9,
+          "w": 9,
+          "h": 4,
+          "item_ref": {
+            "index": 2,
+            "text": "Build the complete trainer workspace with professional expertise profile, course and trainee oversight, resource library and content uploads, questionnaire/MCQ authoring with deadlines and time limits, participation tracking, and performance views that distinguish high-performing, at-risk, inactive, and incomplete trainees."
+          },
+          "type_source": "palette"
+        }
+      ],
+      "deleted_ids": []
+    },
+    {
+      "id": "page-f3cb279e",
+      "name": "Assessment Studio",
+      "route": "/trainer/assessments",
+      "item_ref": {
+        "index": 2,
+        "text": "Build the complete trainer workspace with professional expertise profile, course and trainee oversight, resource library and content uploads, questionnaire/MCQ authoring with deadlines and time limits, participation tracking, and performance views that distinguish high-performing, at-risk, inactive, and incomplete trainees."
+      },
+      "blocks": [
+        {
+          "id": "trainer-assessment-sidebar",
+          "type": "sidebar",
+          "label": "Trainer navigation",
+          "hint": "Persistent trainer workspace navigation",
+          "x": 0,
+          "y": 0,
+          "w": 3,
+          "h": 11,
+          "item_ref": {
+            "index": 2,
+            "text": "Build the complete trainer workspace with professional expertise profile, course and trainee oversight, resource library and content uploads, questionnaire/MCQ authoring with deadlines and time limits, participation tracking, and performance views that distinguish high-performing, at-risk, inactive, and incomplete trainees."
+          },
+          "type_source": "palette"
+        },
+        {
+          "id": "assessment-setup",
+          "type": "form",
+          "label": "Assessment setup",
+          "hint": "Title, course, subject, deadline, time limit, pass mark, and publishing status",
+          "x": 3,
+          "y": 0,
+          "w": 4,
+          "h": 5,
+          "item_ref": {
+            "index": 2,
+            "text": "Build the complete trainer workspace with professional expertise profile, course and trainee oversight, resource library and content uploads, questionnaire/MCQ authoring with deadlines and time limits, participation tracking, and performance views that distinguish high-performing, at-risk, inactive, and incomplete trainees."
+          },
+          "type_source": "palette"
+        },
+        {
+          "id": "question-editor",
+          "type": "form",
+          "label": "Question editor",
+          "hint": "Add, edit, reorder, and remove MCQs with four options and a correct answer",
+          "x": 7,
+          "y": 0,
+          "w": 5,
+          "h": 7,
+          "item_ref": {
+            "index": 2,
+            "text": "Build the complete trainer workspace with professional expertise profile, course and trainee oversight, resource library and content uploads, questionnaire/MCQ authoring with deadlines and time limits, participation tracking, and performance views that distinguish high-performing, at-risk, inactive, and incomplete trainees."
+          },
+          "type_source": "palette"
+        },
+        {
+          "id": "participation-monitor",
+          "type": "table",
+          "label": "Participation monitor",
+          "hint": "Attempts, scores, pass status, completion, and assessment-level summary",
+          "x": 3,
+          "y": 7,
+          "w": 9,
+          "h": 4,
+          "item_ref": {
+            "index": 2,
+            "text": "Build the complete trainer workspace with professional expertise profile, course and trainee oversight, resource library and content uploads, questionnaire/MCQ authoring with deadlines and time limits, participation tracking, and performance views that distinguish high-performing, at-risk, inactive, and incomplete trainees."
+          },
+          "type_source": "palette"
+        }
+      ],
+      "deleted_ids": []
+    },
+    {
+      "id": "page-5d30a13c",
+      "name": "Admin Dashboard",
+      "route": "/admin",
+      "item_ref": {
+        "index": 3,
+        "text": "Build the complete admin control center with user approval and role management, organization-wide course/trainer/assessment/certification oversight, participation and performance charts, announcement publishing, and competency mapping that ranks suitable trainers against each course’s required skills with transparent match scores and matched-skill details."
+      },
+      "blocks": [
+        {
+          "id": "admin-sidebar",
+          "type": "sidebar",
+          "label": "Admin navigation",
+          "hint": "Dashboard, Users, Approvals, Roles, Courses, Trainers, Assessments, Certifications, Analytics, Announcements, Competency Map, Logout",
+          "x": 0,
+          "y": 0,
+          "w": 3,
+          "h": 12,
+          "item_ref": {
+            "index": 3,
+            "text": "Build the complete admin control center with user approval and role management, organization-wide course/trainer/assessment/certification oversight, participation and performance charts, announcement publishing, and competency mapping that ranks suitable trainers against each course’s required skills with transparent match scores and matched-skill details."
+          },
+          "type_source": "palette"
+        },
+        {
+          "id": "admin-header",
+          "type": "header",
+          "label": "Organization training overview",
+          "hint": "Administrative context, alerts, and management shortcuts",
+          "x": 3,
+          "y": 0,
+          "w": 9,
+          "h": 2,
+          "item_ref": {
+            "index": 3,
+            "text": "Build the complete admin control center with user approval and role management, organization-wide course/trainer/assessment/certification oversight, participation and performance charts, announcement publishing, and competency mapping that ranks suitable trainers against each course’s required skills with transparent match scores and matched-skill details."
+          },
+          "type_source": "palette"
+        },
+        {
+          "id": "admin-stats",
+          "type": "kpi",
+          "label": "Organization totals",
+          "hint": "Trainees, trainers, courses, certificates, assessments, and enrollments",
+          "x": 3,
+          "y": 2,
+          "w": 9,
+          "h": 2,
+          "item_ref": {
+            "index": 3,
+            "text": "Build the complete admin control center with user approval and role management, organization-wide course/trainer/assessment/certification oversight, participation and performance charts, announcement publishing, and competency mapping that ranks suitable trainers against each course’s required skills with transparent match scores and matched-skill details."
+          },
+          "type_source": "palette"
+        },
+        {
+          "id": "admin-participation",
+          "type": "chart_bar",
+          "label": "Course participation",
+          "hint": "Visible bars showing enrollment, participation, completion, and certification by course",
+          "x": 3,
+          "y": 4,
+          "w": 5,
+          "h": 5,
+          "item_ref": {
+            "index": 3,
+            "text": "Build the complete admin control center with user approval and role management, organization-wide course/trainer/assessment/certification oversight, participation and performance charts, announcement publishing, and competency mapping that ranks suitable trainers against each course’s required skills with transparent match scores and matched-skill details."
+          },
+          "type_source": "palette"
+        },
+        {
+          "id": "admin-outcomes",
+          "type": "chart_bar",
+          "label": "Assessment outcomes",
+          "hint": "Visible bars comparing pass rates and average scores",
+          "x": 8,
+          "y": 4,
+          "w": 4,
+          "h": 5,
+          "item_ref": {
+            "index": 3,
+            "text": "Build the complete admin control center with user approval and role management, organization-wide course/trainer/assessment/certification oversight, participation and performance charts, announcement publishing, and competency mapping that ranks suitable trainers against each course’s required skills with transparent match scores and matched-skill details."
+          },
+          "type_source": "palette"
+        },
+        {
+          "id": "admin-approvals",
+          "type": "table",
+          "label": "Pending approvals",
+          "hint": "Requested role, account details, approve/reject actions, and status",
+          "x": 3,
+          "y": 9,
+          "w": 5,
+          "h": 4,
+          "item_ref": {
+            "index": 3,
+            "text": "Build the complete admin control center with user approval and role management, organization-wide course/trainer/assessment/certification oversight, participation and performance charts, announcement publishing, and competency mapping that ranks suitable trainers against each course’s required skills with transparent match scores and matched-skill details."
+          },
+          "type_source": "palette"
+        },
+        {
+          "id": "admin-announcements",
+          "type": "list",
+          "label": "Announcements publisher",
+          "hint": "Create and manage announcements, achievements, and new-content notices",
+          "x": 8,
+          "y": 9,
+          "w": 4,
+          "h": 4,
+          "item_ref": {
+            "index": 3,
+            "text": "Build the complete admin control center with user approval and role management, organization-wide course/trainer/assessment/certification oversight, participation and performance charts, announcement publishing, and competency mapping that ranks suitable trainers against each course’s required skills with transparent match scores and matched-skill details."
+          },
+          "type_source": "palette"
+        }
+      ],
+      "deleted_ids": []
+    },
+    {
+      "id": "page-aab603d7",
+      "name": "Competency Mapping",
+      "route": "/admin/competency",
+      "item_ref": {
+        "index": 3,
+        "text": "Build the complete admin control center with user approval and role management, organization-wide course/trainer/assessment/certification oversight, participation and performance charts, announcement publishing, and competency mapping that ranks suitable trainers against each course’s required skills with transparent match scores and matched-skill details."
+      },
+      "blocks": [
+        {
+          "id": "competency-sidebar",
+          "type": "sidebar",
+          "label": "Admin navigation",
+          "hint": "Persistent admin workspace navigation",
+          "x": 0,
+          "y": 0,
+          "w": 3,
+          "h": 11,
+          "item_ref": {
+            "index": 3,
+            "text": "Build the complete admin control center with user approval and role management, organization-wide course/trainer/assessment/certification oversight, participation and performance charts, announcement publishing, and competency mapping that ranks suitable trainers against each course’s required skills with transparent match scores and matched-skill details."
+          },
+          "type_source": "palette"
+        },
+        {
+          "id": "skill-requirements",
+          "type": "form",
+          "label": "Course skill requirements",
+          "hint": "Select a course and define weighted required skills and target proficiency",
+          "x": 3,
+          "y": 0,
+          "w": 4,
+          "h": 5,
+          "item_ref": {
+            "index": 3,
+            "text": "Build the complete admin control center with user approval and role management, organization-wide course/trainer/assessment/certification oversight, participation and performance charts, announcement publishing, and competency mapping that ranks suitable trainers against each course’s required skills with transparent match scores and matched-skill details."
+          },
+          "type_source": "palette"
+        },
+        {
+          "id": "competency-matrix",
+          "type": "text",
+          "label": "Skills-to-trainer matrix",
+          "hint": "Signature matrix comparing required proficiency against each trainer’s verified skills",
+          "x": 7,
+          "y": 0,
+          "w": 5,
+          "h": 5,
+          "item_ref": {
+            "index": 3,
+            "text": "Build the complete admin control center with user approval and role management, organization-wide course/trainer/assessment/certification oversight, participation and performance charts, announcement publishing, and competency mapping that ranks suitable trainers against each course’s required skills with transparent match scores and matched-skill details."
+          },
+          "type_source": "palette"
+        },
+        {
+          "id": "trainer-ranking",
+          "type": "list",
+          "label": "Ranked trainer recommendations",
+          "hint": "Transparent match score, matched skills, gaps, expertise, and profile action",
+          "x": 3,
+          "y": 5,
+          "w": 9,
+          "h": 5,
+          "item_ref": {
+            "index": 3,
+            "text": "Build the complete admin control center with user approval and role management, organization-wide course/trainer/assessment/certification oversight, participation and performance charts, announcement publishing, and competency mapping that ranks suitable trainers against each course’s required skills with transparent match scores and matched-skill details."
+          },
+          "type_source": "palette"
+        }
+      ],
+      "deleted_ids": []
+    }
+  ],
+  "attached_to_plan": false
+}

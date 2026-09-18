@@ -1,0 +1,338 @@
+/* ==========================================================================
+   CAPACITY CONNECT — application-wide surfaces, motion and utilities.
+   Institutional operations aesthetic: deep navy command bands, warm ivory
+   canvas, meteorological grid/isobar motifs, restrained professional motion.
+   ========================================================================== */
+
+:root {
+    --cc-navy: #0a1b33;
+    --cc-navy-soft: #12304f;
+    --cc-ivory: #f6f4ef;
+    --cc-ivory-warm: #fbfaf6;
+    --cc-line: #e2e8f0;
+    --cc-teal: #0f766e;
+    --cc-saffron: #d97706;
+    --cc-sky: #0284c7;
+    --cc-radius: 1rem; /* 16px */
+    --cc-radius-sm: 0.875rem; /* 14px */
+    --cc-ease: cubic-bezier(0.22, 1, 0.36, 1);
+}
+
+/* ----------------------------------------------------------- surfaces */
+.cc-card {
+    border-radius: var(--cc-radius);
+    border: 1px solid var(--cc-line);
+    background-color: #ffffff;
+    box-shadow: 0 1px 2px rgba(10, 27, 51, 0.05);
+    transition:
+        transform 180ms var(--cc-ease),
+        box-shadow 200ms var(--cc-ease),
+        border-color 200ms var(--cc-ease),
+        background-color 200ms var(--cc-ease);
+}
+
+.cc-panel {
+    border-radius: var(--cc-radius);
+    border: 1px solid var(--cc-line);
+    background-color: #ffffff;
+    box-shadow: 0 1px 2px rgba(10, 27, 51, 0.04);
+}
+
+.cc-panel-head {
+    background-image: linear-gradient(
+        180deg,
+        rgba(251, 250, 246, 0.9),
+        rgba(255, 255, 255, 0)
+    );
+}
+
+.cc-inset {
+    border-radius: var(--cc-radius-sm);
+    border: 1px solid var(--cc-line);
+    background-color: var(--cc-ivory-warm);
+}
+
+/* Hover elevation is reserved for interactive/card surfaces only. */
+.cc-hover:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 14px 30px -18px rgba(10, 27, 51, 0.35);
+    border-color: rgba(15, 118, 110, 0.35);
+}
+
+.cc-lift {
+    transition:
+        transform 200ms var(--cc-ease),
+        box-shadow 200ms var(--cc-ease),
+        border-color 200ms var(--cc-ease),
+        background-color 200ms var(--cc-ease);
+}
+
+.cc-lift:hover {
+    transform: translateY(-3px);
+}
+
+.cc-press:active {
+    transform: translateY(1px);
+}
+
+/* ------------------------------------------------------ focus visible */
+.cc-focus:focus-visible {
+    outline: 2px solid rgba(15, 118, 110, 0.75);
+    outline-offset: 2px;
+}
+
+.cc-focus-amber:focus-visible {
+    outline: 2px solid rgba(217, 119, 6, 0.8);
+    outline-offset: 2px;
+}
+
+.cc-focus-sky:focus-visible {
+    outline: 2px solid rgba(2, 132, 199, 0.8);
+    outline-offset: 2px;
+}
+
+.cc-focus-navy:focus-visible {
+    outline: 2px solid rgba(10, 27, 51, 0.7);
+    outline-offset: 2px;
+}
+
+/* ----------------------------------------------- meteorological motifs */
+.cc-grid-motif {
+    background-image:
+        linear-gradient(
+            to right,
+            rgba(148, 163, 184, 0.3) 1px,
+            transparent 1px
+        ),
+        linear-gradient(
+            to bottom,
+            rgba(148, 163, 184, 0.3) 1px,
+            transparent 1px
+        );
+    background-size: 40px 40px;
+}
+
+.cc-isobar-motif {
+    background-image:
+        repeating-radial-gradient(
+            circle at 88% 16%,
+            rgba(56, 189, 248, 0.3) 0px,
+            rgba(56, 189, 248, 0.3) 1px,
+            transparent 1px,
+            transparent 28px
+        ),
+        linear-gradient(
+            to right,
+            rgba(148, 163, 184, 0.26) 1px,
+            transparent 1px
+        );
+    background-size: auto, 44px 44px;
+}
+
+.cc-auth-surface {
+    position: relative;
+    isolation: isolate;
+    overflow: hidden;
+}
+
+.cc-auth-surface::before {
+    content: "";
+    position: absolute;
+    inset: -20%;
+    z-index: -2;
+    background-image:
+        repeating-radial-gradient(
+            circle at 22% 30%,
+            rgba(45, 212, 191, 0.16) 0px,
+            rgba(45, 212, 191, 0.16) 1px,
+            transparent 1px,
+            transparent 68px
+        ),
+        repeating-radial-gradient(
+            circle at 82% 78%,
+            rgba(56, 189, 248, 0.12) 0px,
+            rgba(56, 189, 248, 0.12) 1px,
+            transparent 1px,
+            transparent 92px
+        );
+    pointer-events: none;
+}
+
+.cc-auth-surface::after {
+    content: "";
+    position: absolute;
+    top: -30%;
+    left: 8%;
+    width: 46rem;
+    height: 46rem;
+    z-index: -1;
+    border-radius: 9999px;
+    background: conic-gradient(
+        from 0deg,
+        rgba(45, 212, 191, 0.18),
+        rgba(45, 212, 191, 0) 38%,
+        rgba(45, 212, 191, 0) 100%
+    );
+    animation: cc-radar-sweep 18s linear infinite;
+    pointer-events: none;
+}
+
+@keyframes cc-radar-sweep {
+    to {
+        transform: rotate(360deg);
+    }
+}
+
+/* ---------------------------------------------------------- entrances */
+.cc-rise {
+    animation: cc-rise 420ms var(--cc-ease) both;
+}
+
+.cc-rise-delay-1 {
+    animation-delay: 80ms;
+}
+
+.cc-rise-delay-2 {
+    animation-delay: 160ms;
+}
+
+.cc-rise-delay-3 {
+    animation-delay: 240ms;
+}
+
+@keyframes cc-rise {
+    from {
+        opacity: 0;
+        transform: translateY(12px);
+    }
+    to {
+        opacity: 1;
+        transform: translateY(0);
+    }
+}
+
+.cc-fade {
+    animation: cc-fade 220ms var(--cc-ease) both;
+}
+
+@keyframes cc-fade {
+    from {
+        opacity: 0;
+    }
+    to {
+        opacity: 1;
+    }
+}
+
+.cc-pulse-dot {
+    animation: cc-pulse 2.6s ease-in-out infinite;
+}
+
+@keyframes cc-pulse {
+    0%,
+    100% {
+        opacity: 0.45;
+        transform: scale(0.85);
+    }
+    50% {
+        opacity: 1;
+        transform: scale(1.12);
+    }
+}
+
+/* ---------------------------------------------------- progress meters */
+.cc-bar {
+    position: relative;
+    overflow: hidden;
+    border-radius: 9999px;
+    background-color: #e2e8f0;
+}
+
+.cc-bar-fill {
+    height: 100%;
+    border-radius: 9999px;
+    transform-origin: left center;
+    animation: cc-bar-grow 620ms var(--cc-ease) both;
+    transition: width 240ms var(--cc-ease);
+}
+
+@keyframes cc-bar-grow {
+    from {
+        transform: scaleX(0.02);
+    }
+    to {
+        transform: scaleX(1);
+    }
+}
+
+/* --------------------------------------------------- skeleton shimmer */
+.cc-skeleton {
+    position: relative;
+    overflow: hidden;
+    background-color: #f1f5f9;
+}
+
+.cc-skeleton::after {
+    content: "";
+    position: absolute;
+    inset: 0;
+    transform: translateX(-100%);
+    background-image: linear-gradient(
+        90deg,
+        rgba(255, 255, 255, 0) 0%,
+        rgba(255, 255, 255, 0.72) 50%,
+        rgba(255, 255, 255, 0) 100%
+    );
+    animation: cc-shimmer 1.5s ease-in-out infinite;
+}
+
+@keyframes cc-shimmer {
+    to {
+        transform: translateX(100%);
+    }
+}
+
+/* -------------------------------------------- workspace navigation bar */
+.cc-worknav {
+    scrollbar-width: thin;
+    scrollbar-color: rgba(148, 163, 184, 0.5) transparent;
+}
+
+.cc-worknav::-webkit-scrollbar {
+    height: 6px;
+}
+
+.cc-worknav::-webkit-scrollbar-thumb {
+    border-radius: 9999px;
+    background-color: rgba(148, 163, 184, 0.45);
+}
+
+/* Dense data tables stay calm: colour feedback only, no motion. */
+.cc-table-row {
+    transition: background-color 140ms linear;
+}
+
+/* --------------------------------------------------- reduced motion */
+@media (prefers-reduced-motion: reduce) {
+    .cc-auth-surface::after,
+    .cc-rise,
+    .cc-fade,
+    .cc-pulse-dot,
+    .cc-bar-fill,
+    .cc-skeleton::after {
+        animation: none !important;
+    }
+
+    .cc-card,
+    .cc-lift,
+    .cc-bar-fill,
+    .cc-table-row {
+        transition: none !important;
+    }
+
+    .cc-lift:hover,
+    .cc-hover:hover,
+    .cc-press:active {
+        transform: none;
+    }
+}

@@ -1,63 +1,105 @@
-# CAPACITY CONNECT — Functional design overview
+# CAPACITY CONNECT — Architecture and operational boundaries
 
-Document path: `app/CAPACITY_CONNECT_ARCHITECTURE.md`. This document is under `app/`, the supported artifact location for this documentation-only update.
+Document path: `app/CAPACITY_CONNECT_ARCHITECTURE.md`.
 
-## Scope
+## Scope and assurance posture
 
-This is a concise, non-sensitive conceptual overview of the product and its trust boundaries, not a disclosure of internal system architecture, internal structures or deployment configuration. It contains no secrets, connection information or deployment internals. Application code is unchanged. Implementation evidence is bounded; production readiness is not claimed.
+This is a non-sensitive conceptual and operational guide. It intentionally omits credentials, database addresses, tokens, internal deployment topology and private implementation details. It records boundaries and evidence limits; it is not a production-readiness approval. Application code is unchanged by this documentation update, and this session did not boot the browser runtime.
 
-## Competency-driven business flow
+## Conceptual system flow
 
-Organizational need → required competencies → evidence-bound gap → affected trainees → explainable Trainer Fit → eligible trainer or complementary team → training → learning resources → formative practice → official assessment → verified competency evidence → updated current competency and gap → competency passport → observed training effectiveness.
+```text
+Frontend/UI
+    ↓
+Reflex State
+    ↓
+Domain Services
+    ↓
+Managed PostgreSQL
+    ↓
+Authentication
+    ↓
+Authorization
+    ↓
+External services
+```
 
-Requirements and demonstrated proficiency are distinct. A required level states the organizational target; current level requires qualifying evidence. An unmeasured baseline must remain unmeasured rather than being treated as zero. Self-reported skills, course attendance, resource completion and practice alone do not establish official mastery.
+This is a conceptual dependency view, not a literal request pipeline. Authentication and authorization are cross-cutting controls: they protect UI routes, state events, services and data access rather than being downstream stages after the database. External services include advisory AI and notification transport; neither is authoritative for identity, access, grades, certificates or competency.
 
-Trainer Fit is an explainable recommendation, not authorization or guaranteed availability. Availability and capacity must be revalidated before assignment. A team proposal describes coverage and remaining gaps; it is not proof of a completed allocation. Scoring weights are application policy defaults, not official SIH-mandated weights.
+## Environment variables and secret handling
 
-Learning paths describe ordered development activities. Their progress must reflect completed activities rather than a visual-only progress indicator. Official assessment is separate from formative practice and must derive scores and competency evidence from authorized submissions, never client-provided scores or AI judgments.
+Names and purposes only are listed here; no values belong in this document.
 
-The passport summarizes evidence-backed competency and provenance. Effectiveness compares verified chronological observations and training activity; it reports observed improvement, not causal proof that training caused the change.
+- `REFLEX_DB_URL`, `REFLEX_ASYNC_DB_URL`, `DATABASE_URL`: managed database URL aliases used by the application/runtime.
+- `CC_SESSION_SECRET`: optional dedicated server-side session-signing secret. When absent, the application derives a signing key from the managed-database configuration as a fallback; this does not resolve the client-managed cookie limitation.
+- `CAPACITY_CONNECT_DEMO_PASSWORD`: explicitly configured password source for isolated demo seeding and authorized demo access.
+- `GOOGLE_API_KEY`: provider credential for CAPACITY AI.
+- `GEMINI_BASE_URL`: optional Gemini-compatible endpoint override.
+- `RESEND_API_KEY`: provider credential for outbound notification transport.
+- `RESEND_FROM_EMAIL`: optional authorized sender identity.
+- `CC_PUBLIC_URL`: approved public base URL used for safe notification links and verification links.
+- `REFLEX_ENV`: runtime environment classification.
+- `CC_PRIVATE_UPLOAD_DIR`: private resource storage directory. Production must set this to durable non-public storage with least-privilege filesystem access; no resource bytes should be served through Reflex’s public upload directory.
 
-## Role boundaries
+Secrets belong in deployment or local secret settings, never in browser state, source control, logs, slides or documentation. This document contains no secret values.
 
-- **Trainee:** own professional record, eligible learning, own attempts, assignments, feedback, development gaps, paths, practice, evidence, passport, certificate requests and notices.
-- **Trainer:** own professional expertise, authorized courses and cohorts, approved content/questionnaire work, assigned grading, availability and permitted feedback/performance views.
-- **Administrator:** account decisions, roles, organizational requirements, training allocation, course/assessment/certification oversight, competency coverage and operational reports.
-- **Public visitor:** public information and deliberately limited certificate verification, not private learner records or protected learning files.
+## Database setup and migrations
 
-Navigation visibility is not authorization. Each sensitive action must independently respect identity, current approval/activity, ownership and course scope. The positive handler checks supplied in this session do not establish complete negative-access coverage.
+Managed PostgreSQL is provisioned by the hosting/project workflow. ORM models in `app/models.py` define the desired application schema. Migration history is held under the protected `db_migrations` directory. Migrations are applied by the managed migration workflow; do not perform ad-hoc `CREATE` or `ALTER` operations, manually initialize tables, or treat application startup as a migration mechanism. A successful model read or seeded record does not prove that every mutation, constraint, transaction race or deployment connection has been verified.
 
-## Framework and persistence concepts
+## Seed and repair process
 
-At the framework level, Reflex pages present the user interface, state events coordinate user actions, and service logic performs domain operations. Transient form/loading state is different from durable business records. Managed PostgreSQL is the persistent record store; a state field or a displayed value is not itself evidence of database persistence.
+The seed process is idempotent and requires an explicitly configured `CAPACITY_CONNECT_DEMO_PASSWORD`; it must not invent, print or store a password in frontend metadata. Demo records are created only when the user database is empty. The normalized v2 repair is also idempotent and is intended to repair or normalize the isolated demonstration baseline without duplicating records. Production data must never be reset or reseeded for a demo. Seeding is not an undo mechanism for attempts, grades, evidence, allocations or certificates; use an authorized disposable database or restored baseline for rehearsal.
 
-The supplied database checks establish the existence of selected persisted demonstration records, including the nine-step Velocity path. They do not establish every mutation, browser refresh, restart, concurrency or deployment behavior. Detailed internal topology, module relationships, schemas and operational configuration are intentionally outside this document.
+## Local run guidance
 
-## External assistance and messaging boundaries
+At a conceptual command level:
 
-### Gemini: advisory only
+1. Configure a development PostgreSQL database and the required local secrets without placing values in the repository.
+2. Apply the managed migration set through the approved migration workflow.
+3. Start the Reflex application with the normal development command, for example `reflex run`.
+4. Exercise the supplied test suite after startup and record actual results separately from source inspection.
 
-CAPACITY AI provides contextual learning assistance: explain a concept, summarize approved material, explain a mistake without disclosing protected official answers, draft practice questions, recommend a resource and suggest a next step. Context must be authorized and minimized before any provider request. Resource text and generated output remain untrusted.
+This session did not boot the browser runtime. Browser behavior, concurrency, durable uploads, provider delivery and a complete cross-role rehearsal therefore remain evidence-limited.
 
-Gemini must not decide access, issue certificates, write official grades or award verified competency. Generated formative drafts require trainer review before publication. An explicit database-grounded fallback is not represented as a successful model response. The supplied endpoint probe and authorized-course-context check succeeded; full contextual and adversarial browser behavior remains NOT_VERIFIED.
+## Production run guidance
 
-### Resend: notification delivery boundary
+Configure deployment-managed secrets, authorized domains and approved storage/access controls. Apply persisted migrations through the deployment workflow, then start the application through the platform's Reflex deployment runtime. Complete post-deploy acceptance for authentication, authorization, database persistence, protected downloads, AI boundaries, notification delivery and certificate verification.
 
-A durable outbox separates business notification intent from external transport. Sending is not the business transaction itself. Scoped recipients, deduplication and bounded retry behavior are required; uncertain provider acceptance must be reconciled rather than blindly resent.
+**Production deployment: NOT_VERIFIED.** No production-readiness claim is made. Known release blockers and gaps remain documented in `CAPACITY_CONNECT_SECURITY_AUDIT.md`.
 
-A provider-accepted message is not proof of inbox delivery or a read receipt. In-app read receipts are separate from email outcomes. Recovery secrets are not part of the ordinary notification flow. Real email delivery remains NOT_VERIFIED; the prior audit's sender-authorization prerequisite has not been cleared by supplied evidence.
+## AI setup and fallback boundary
 
-## Certificate verification concept
+CAPACITY AI uses `GOOGLE_API_KEY` and may use the optional `GEMINI_BASE_URL`. Requests must contain minimized, authorized learning context. Gemini is advisory only: it cannot authorize access, disclose active official answers, write official grades, issue certificates or award verified competency. Model output and approved resource text are untrusted. If the provider is unavailable or unconfigured, the application uses a database-grounded advisory fallback and labels it as a fallback, not as a successful model response. Full adversarial prompting, all actions and browser behavior remain NOT_VERIFIED.
 
-An issued certificate has a human-readable display identity and a separate unpredictable verification token. The verification link carries that token; the QR encodes the verification link. Verification must consult current status and expose only intended public certificate information, including revocation status and appropriate evidence context.
+## Storage setup and assurance limits
 
-A certificate number alone must not be assumed to provide secure lookup authorization. A valid course certificate without linked normalized evidence is not proof of competency mastery. The supplied evidence confirms a 64-character token and distinct-token unit tests, not an end-to-end QR scan, new issuance or revoked-token browser test. No token values are included here.
+Training resources and submitted files use private storage outside Reflex’s public upload directory, bounded content validation, bounded filenames and paths, and authorization at download time. Fresh role-scoped server events retrieve bytes: trainees require current non-dropped enrollment and a published matching-course resource; trainers require a current approved course assignment. Frontend payloads do not expose stored filenames and direct `rx.get_upload_url` access was removed. Read/write operations are bounded at 50 MB and private storage round-trip tests pass.
 
-## Current assurance limits
+Production must configure `CC_PRIVATE_UPLOAD_DIR` to durable non-public storage with least-privilege filesystem access. Deployment storage durability, large-file delivery behavior, malicious-content scanning and post-deploy persistence remain NOT_VERIFIED. Do not treat UI visibility as download authorization.
 
-- INSECURE release blocker: client-managed non-HttpOnly session cookie.
-- INSECURE release blocker: public upload URL authorization.
-- PARTIALLY_IMPLEMENTED: secure recovery delivery and full session revocation remain gaps.
-- NOT_VERIFIED: complete browser workflow, concurrency, real email delivery, protected upload persistence across deploy and production deployment.
+## Demo accounts and guide
 
-The companion final audit, security audit and test report distinguish source-level implementation from executed evidence. This functional overview is not a release approval.
+The isolated demonstration actors and role-specific navigation are documented in [`CAPACITY_CONNECT_DEMO_GUIDE.md`](CAPACITY_CONNECT_DEMO_GUIDE.md). The guide intentionally names account identifiers but never publishes password values, session values, recovery links or certificate tokens. Obtain the demo password only from the authorized demo administrator through `CAPACITY_CONNECT_DEMO_PASSWORD`, use separate browser profiles, and never rehearse against production.
+
+## Concise eleven-step demo flow
+
+1. Administrator identifies an organizational competency gap and affected trainee.
+2. Administrator reviews explainable Trainer Fit and revalidates assignment eligibility.
+3. Trainee reviews the gap and an owned, persisted learning path.
+4. Trainee completes an approved learning activity and optionally uses advisory AI.
+5. Trainee completes formative practice without changing official mastery.
+6. Trainee takes the authorized, timed official assessment.
+7. The server records qualifying evidence and recalculates the gap.
+8. Trainee reviews the evidence-backed competency passport and provenance.
+9. If currently eligible, trainee requests certification and an administrator reviews issuance; public verification is checked separately.
+10. Administrator reviews observed, chronological training effectiveness without claiming causality.
+11. Administrator recalculates Trainer Fit and trainer reviews permitted cohort feedback/performance.
+
+The eleven-step sequence is a rehearsal plan, not proof that the browser workflow has been executed. Preserve the conservative distinctions between recommendation and authorization, practice and official assessment, observed improvement and causal impact, and course certificates and verified competency evidence.
+
+## Cross-cutting role and security boundaries
+
+Trainees access their own records and eligible learning; trainers access authorized courses, cohorts and grading work; administrators manage organizational and operational controls; public visitors receive only deliberately limited information. Navigation visibility is not authorization. Every sensitive read and mutation must independently check current identity, approval/activity, ownership and course scope.
+
+Current assurance limits include the **INSECURE** client-managed non-HttpOnly session cookie, plus partially implemented recovery delivery and complete session revocation. Protected resource downloads are authorization-scoped, while complete browser workflow, concurrency, real email delivery, deployment storage durability, large-file delivery, malicious-content scanning, post-deploy persistence and production deployment remain **NOT_VERIFIED**. See the companion audit, security audit, test report and demo guide for evidence and limitations.

@@ -11,11 +11,18 @@ This report records actual execution evidence supplied in this session, includin
 | Run | Total discovered/run | Passed | Skipped | Failures | Errors | Interpretation |
 |---|---:|---:|---:|---:|---:|---|
 | Baseline | 24 | 23 | 1 | 0 | 0 | Successful baseline; skipped test included in total |
-| Final post-repair | 35 | 34 | 1 | 0 | 0 | Successful final suite; disposable-database email test still skipped |
+| Intermediate demo-catalog run | 35 | 33 | 1 | 1 | 0 | Historical failed run: one test was skipped and one demo-catalog assertion failed because account metadata still exposed a password field; repaired before final suite |
+| Final post-repair | 47 | 46 | 1 | 0 | 0 | Successful final suite; disposable-database email test still skipped |
 
-The baseline runner reported approximately 0.090 seconds. Final successful runs reported approximately 0.090–0.091 seconds. These short unit/contract runs do not establish end-to-end application speed.
+The baseline runner reported approximately 0.090 seconds. Historical intermediate runs reported approximately 0.090–0.091 seconds. The final supplied run reported 47 total, 46 passed, 1 skipped, 0 failures and 0 errors. These short unit/contract runs do not establish end-to-end application speed.
 
-An intermediate 35-test run failed the demo-catalog assertion because account metadata still exposed a password field. After repair, the same assertion passed, and the final supplied suite had **no failures or errors**. Thus, “no failures” applies to the baseline and final successful runs, not every historical experiment.
+The historical 35-test run comprised **33 passed, 1 skipped, 1 failure and 0 errors**. The failure was the demo-catalog assertion because account metadata still exposed a password field; the skipped test was not run and is not counted as passed. After repair, the same assertion passed, and the final supplied 47-test suite had **46 passed, 1 skipped, 0 failures and 0 errors**. Thus, “no failures” applies to the baseline and final successful runs, not every historical experiment.
+
+### Final supplied suite result
+
+The final suite is **47 total: 46 passed, 1 skipped, 0 failures, 0 errors**. The skipped disposable-database email scope/duplicates/deadlines/admin-guards test remains historical and is not counted as passed. The final repair coverage additionally verifies private resource storage round trips, bounded filenames and paths, 50 MB read/write limits, fresh role-scoped download authorization, no frontend stored filenames, removal of direct `rx.get_upload_url`, and separation of resource completion from certificate issuance.
+
+Resource completion now recalculates progress/completion only. Certification proceeds through trainee readiness/request and administrator approve/issue with live eligibility revalidation.
 
 ### Coverage evidenced by the passing suite
 
@@ -31,6 +38,7 @@ An intermediate 35-test run failed the demo-catalog assertion because account me
 - Certificates/evidence: distinct 64-character verification tokens and score-to-level rubric boundaries.
 - AI: explicit bounded database-grounded fallback and missing-key behavior without network access.
 - Worker behavior: normal cancellation propagates without inappropriate error logging or provider/database work; no authorized sender produces a blocked outcome in mocked testing.
+- Final credential-exposure and security regression contracts: demo-password data cannot enter frontend portal options; server-side assessment locking, expiry, enrollment, persisted-option scoring and competency linkage; draft-only mutation; and token-only certificate lookup.
 
 Many checks inspect source or use mocked dependencies. They do not prove all authorization, persistence, scoring or transport behavior in a deployed application.
 
@@ -39,6 +47,12 @@ Many checks inspect source or use mocked dependencies. They do not prove all aut
 The disposable-database email scope/duplicates/deadlines/admin-guards test remains skipped because it requires a migrated disposable database and must never run against production. A skip is not a pass.
 
 The earlier audit additionally records a narrower, rolled-back managed-database transaction check: the first assignment notice enqueue selected one eligible recipient, and repeating the same logical event inserted zero duplicate deliveries. That check does not replace the skipped test or demonstrate concurrent deduplication.
+
+## Subsequent live protected-download handler check
+
+With valid trainer and trainee sessions bound to the handlers, requests for a nonexistent resource ID were denied for both roles with the same generic message: **“That resource file is unavailable.”** The response did not disclose a path, stored filename or other file-location detail.
+
+This is a bounded negative handler check for one nonexistent ID and two valid session contexts. It is not exhaustive IDOR coverage, and it does not validate deployed-download behavior, durable storage across deployment, browser delivery or production authorization.
 
 ## Live Gemini evidence
 
@@ -89,7 +103,7 @@ These positive checks used bound test identities. They do not prove every unauth
 | Browser interaction | NOT_VERIFIED | Complete eleven-step demo, form actions, navigation, negative flows and refresh checks |
 | Concurrency | NOT_VERIFIED | Duplicate attempts/submissions, enrollment capacity, trainer allocation, issuance and email dispatch races |
 | Real email delivery | NOT_VERIFIED | Authorized sender, controlled recipient, provider acceptance and independently confirmed receipt; acceptance alone is insufficient |
-| Real upload persistence across deploy | NOT_VERIFIED | Protected upload/download before and after restart/deploy, ownership and membership changes |
+| Private storage persistence across deploy | NOT_VERIFIED | Protected download before and after restart/deploy, ownership and membership changes; local private round-trip and 50 MB bounds are already covered |
 | Production deployment | NOT_VERIFIED | Authorized production acceptance, startup/restart and operational validation; imports and handler tests are insufficient |
 | Accessibility and responsiveness | NOT_VERIFIED | Keyboard, screen reader, contrast, reduced motion and 360/390/768/1024/1440-pixel checks |
 | Full assessment security | NOT_VERIFIED | Server deadline/timer/attempt enforcement, answer-key isolation, foreign-option and client-score tampering |
@@ -99,4 +113,4 @@ These positive checks used bound test identities. They do not prove every unauth
 
 ## Conclusion
 
-Bounded tests and live checks provide useful evidence, but the client-managed non-HttpOnly session cookie and public upload URL authorization remain INSECURE release blockers. Password recovery delivery and full session revocation remain gaps. No production-readiness or complete end-to-end security claim is justified.
+Bounded tests and live checks provide useful evidence, but the client-managed non-HttpOnly session cookie remains the explicit INSECURE release blocker. Protected resource downloads are authorization-scoped by fresh server events, while deployment durability, large-file delivery, malicious-content scanning and post-deploy persistence remain NOT_VERIFIED. Password recovery delivery and full session revocation remain gaps. No production-readiness or complete end-to-end security claim is justified.

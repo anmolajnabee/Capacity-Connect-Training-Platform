@@ -54,7 +54,7 @@ Open `/trainee/learning`, select the assigned Doppler-related course and open th
 
 Expected: progress reflects actual activity, not an invented percentage. Do not claim resource completion grants verified proficiency. Optional within this same learning step: open **CAPACITY AI · learning support**, select the enrolled course and demonstrate **Explain Concept** or **Summarize Resource**. Show the source register and model/fallback label; missing approved source text must remain explicit.
 
-Evidence: AI endpoint and course context checks succeeded separately. Resource playback, deployed file persistence, browser AI output and path progression remain NOT_VERIFIED. Use non-sensitive approved demo content because public upload URL authorization is an INSECURE release blocker.
+Evidence: AI endpoint and course context checks succeeded separately. Resource playback, deployed file persistence, browser AI output and path progression remain NOT_VERIFIED. File downloads are authorization-scoped through fresh server events; deployed persistence remains NOT_VERIFIED. Use non-sensitive approved demo content.
 
 ### 5. Trainee — formative adaptive practice
 
@@ -124,4 +124,4 @@ For a genuinely clean reset, restore the isolated pre-demo baseline or replace t
 
 Record actual observations per step, including blockers and deviations. Do not mark a step verified merely because its route exists. Browser interaction, concurrency, real email delivery, real upload persistence across deploy and production deployment remain NOT_VERIFIED in the supplied evidence. Do not send real notification emails during rehearsal without explicit authorization and a controlled recipient.
 
-The client-managed non-HttpOnly session cookie and public upload URL authorization remain **INSECURE release blockers**. Recovery delivery and complete session revocation remain gaps. Successful rehearsal would not, by itself, establish production readiness.
+The client-managed non-HttpOnly session cookie remains the explicit **INSECURE release blocker**. File downloads are authorization-scoped, but deployed storage durability and post-deploy persistence remain **NOT_VERIFIED**. Password recovery delivery and complete session revocation remain gaps. Successful rehearsal would not, by itself, establish production readiness.

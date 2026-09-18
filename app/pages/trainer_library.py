@@ -183,12 +183,13 @@ def _resource_item(item) -> rx.Component:
             ),
             rx.el.div(
                 rx.cond(
-                    item["file_name"] != "",
-                    rx.el.a(
+                    item["has_file"],
+                    rx.el.button(
                         rx.icon("download", class_name="h-4 w-4"),
-                        href=rx.get_upload_url(item["file_name"]),
-                        is_external=True,
-                        title="Open file",
+                        on_click=lambda: TrainerResourceState.download_resource(
+                            item["id"]
+                        ),
+                        title="Download file",
                         class_name="flex size-8 items-center justify-center rounded-lg border border-slate-300 bg-white text-slate-600 hover:border-teal-300 hover:text-teal-700",
                     ),
                     rx.fragment(),

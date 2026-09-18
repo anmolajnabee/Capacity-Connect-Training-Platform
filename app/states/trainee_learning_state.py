@@ -5,15 +5,13 @@ from __future__ import annotations
 import datetime as dt
 import logging
 import secrets
+from app.services.private_files import download_filename, read_private
 from typing import Any, TypedDict
 
 import reflex as rx
 from sqlalchemy import func, select
 
 from app.models import (
-    Assessment,
-    AssessmentResult,
-    Certificate,
     Course,
     CourseFeedback,
     CourseRequiredSkill,
@@ -27,8 +25,7 @@ from app.models import (
     User,
 )
 from app.seed import ensure_seed_data
-from app.services.email_notifications import enqueue
-from app.states.trainee_state import grade_for, parse_int
+from app.states.trainee_state import parse_int
 
 logger = logging.getLogger(__name__)
 
@@ -79,6 +76,7 @@ class ResourceItem(TypedDict):
     duration_minutes: int
     external_url: str
     is_completed: bool
+    has_file: bool
 
 
 class ModuleGroup(TypedDict):
@@ -498,6 +496,7 @@ class TraineeLearningState(rx.State):
             select(Enrollment).where(
                 Enrollment.id == self.selected_enrollment_id,
                 Enrollment.trainee_id == uid,
+                Enrollment.status != EnrollmentStatus.DROPPED.value,
             )
         )
         if enrollment is None:
@@ -539,6 +538,7 @@ class TraineeLearningState(rx.State):
                     "duration_minutes": int(resource.duration_minutes),
                     "external_url": resource.external_url,
                     "is_completed": progress_map.get(resource.id, False),
+                    "has_file": bool(resource.file_name),
                 }
             )
         modules: list[ModuleGroup] = []
@@ -592,6 +592,47 @@ class TraineeLearningState(rx.State):
             logging.exception(f"Error selecting enrollment: {exception}")
             self.error_message = "Could not open that course."
 
+    @rx.event
+    async def download_resource(self, resource_id: int):
+        self.error_message = ""
+        uid = await self._uid()
+        if uid <= 0:
+            return rx.redirect("/login")
+        try:
+            async with rx.asession() as session:
+                enrollment = await session.scalar(
+                    select(Enrollment).where(
+                        Enrollment.id == self.selected_enrollment_id,
+                        Enrollment.trainee_id == uid,
+                        Enrollment.status != EnrollmentStatus.DROPPED.value,
+                    )
+                )
+                resource = await session.scalar(
+                    select(LearningResource).where(
+                        LearningResource.id == resource_id,
+                        LearningResource.course_id == enrollment.course_id
+                        if enrollment
+                        else False,
+                        LearningResource.is_published.is_(True),
+                    )
+                )
+                if (
+                    enrollment is None
+                    or resource is None
+                    or not resource.file_name
+                ):
+                    self.error_message = "That resource file is unavailable."
+                    return
+                data = read_private(resource.file_name)
+                filename = download_filename(resource.title, resource.file_name)
+        except Exception as exception:
+            logging.exception(
+                f"Error downloading resource: {type(exception).__name__}"
+            )
+            self.error_message = "That resource file is unavailable."
+            return
+        return rx.download(data=data, filename=filename)
+
     async def _recalculate(self, session, enrollment: Enrollment) -> float:
         total = int(
             await session.scalar(
@@ -623,49 +664,6 @@ class TraineeLearningState(rx.State):
         await session.commit()
         return percent
 
-    async def _maybe_issue_certificate(
-        self, session, enrollment: Enrollment, uid: int
-    ) -> bool:
-        if enrollment.status != EnrollmentStatus.COMPLETED.value:
-            return False
-        existing = await session.scalar(
-            select(Certificate).where(
-                Certificate.course_id == enrollment.course_id,
-                Certificate.trainee_id == uid,
-            )
-        )
-        if existing is not None:
-            return False
-        best = await session.scalar(
-            select(func.max(AssessmentResult.percentage))
-            .join(
-                Assessment,
-                Assessment.id == AssessmentResult.assessment_id,
-            )
-            .where(
-                AssessmentResult.trainee_id == uid,
-                AssessmentResult.is_passed.is_(True),
-                Assessment.course_id == enrollment.course_id,
-            )
-        )
-        final_score = float(best or 0.0)
-        course = await session.get(Course, enrollment.course_id)
-        if course is None:
-            return False
-        certificate = Certificate(
-            certificate_number=f"CC-{course.code}-{uid}-{secrets.token_hex(2).upper()}",
-            course_id=course.id,
-            trainee_id=uid,
-            final_score=final_score,
-            grade=grade_for(final_score) if final_score else "P",
-            verification_code=secrets.token_hex(32),
-        )
-        session.add(certificate)
-        await session.flush()
-        await enqueue(session, "certificate_issued", certificate)
-        await session.commit()
-        return True
-
     @rx.event
     async def toggle_resource(self, resource_id: int):
         self.error_message = ""
@@ -674,13 +672,13 @@ class TraineeLearningState(rx.State):
         if uid <= 0:
             return rx.redirect("/login")
         percent = 0.0
-        issued = False
         try:
             async with rx.asession() as session:
                 enrollment = await session.scalar(
                     select(Enrollment).where(
                         Enrollment.id == self.selected_enrollment_id,
                         Enrollment.trainee_id == uid,
+                        Enrollment.status != EnrollmentStatus.DROPPED.value,
                     )
                 )
                 if enrollment is None:
@@ -690,6 +688,7 @@ class TraineeLearningState(rx.State):
                     select(LearningResource).where(
                         LearningResource.id == resource_id,
                         LearningResource.course_id == enrollment.course_id,
+                        LearningResource.is_published.is_(True),
                     )
                 )
                 if resource is None:
@@ -718,21 +717,15 @@ class TraineeLearningState(rx.State):
                     )
                 await session.commit()
                 percent = await self._recalculate(session, enrollment)
-                issued = await self._maybe_issue_certificate(
-                    session, enrollment, uid
-                )
                 await self._load_enrollments(session, uid)
                 await self._load_modules(session, uid)
         except Exception as exception:
             logging.exception(f"Error toggling resource: {exception}")
             self.error_message = "Could not update the resource progress."
             return
-        if issued:
-            self.success_message = "Course completed at 100% — a certificate record has been issued."
-        else:
-            self.success_message = (
-                f"Progress recalculated: {percent:.0f}% complete."
-            )
+        self.success_message = (
+            f"Progress recalculated: {percent:.0f}% complete."
+        )
 
     # ------------------------------------------------------------- feedback
     async def _load_feedback(self, session, uid: int) -> None:

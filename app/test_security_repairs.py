@@ -16,6 +16,14 @@ from app.security import (
     validate_role,
 )
 from app.services.evidence import score_to_level
+from app.services.private_files import (
+    MAX_PRIVATE_FILE_BYTES,
+    download_filename,
+    private_path,
+    read_private,
+    validate_filename,
+    write_private,
+)
 from app.models import Certificate
 from app.seed import DEMO_ACCOUNTS
 from app.states import auth_state
@@ -89,6 +97,31 @@ class ResourceValidationTests(unittest.TestCase):
             "https://example.org/" + "x" * 500,
         ):
             self.assertFalse(valid_resource_url(url))
+
+
+class PrivateFileTests(unittest.TestCase):
+    def test_filename_policy_and_bounds(self):
+        for value in ("../x", "a/b", "a\\b", "/tmp/x", "", "x" * 129):
+            with self.assertRaises(ValueError):
+                validate_filename(value)
+        with self.assertRaises(ValueError):
+            download_filename("Title", "../secret.pdf")
+
+    def test_private_round_trip_and_size_bound(self):
+        import tempfile
+
+        with (
+            tempfile.TemporaryDirectory() as directory,
+            patch.dict("os.environ", {"CC_PRIVATE_UPLOAD_DIR": directory}),
+        ):
+            write_private("sample.txt", b"hello")
+            self.assertEqual(read_private("sample.txt"), b"hello")
+            with self.assertRaises(ValueError):
+                write_private("large.txt", b"x" * (MAX_PRIVATE_FILE_BYTES + 1))
+            self.assertEqual(
+                private_path("sample.txt").parent.resolve(),
+                Path(directory).resolve(),
+            )
 
 
 class EvidenceAndTokenTests(unittest.TestCase):

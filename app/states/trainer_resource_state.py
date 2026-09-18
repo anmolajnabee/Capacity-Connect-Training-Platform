@@ -20,6 +20,12 @@ from app.models import (
     Certificate,
 )
 from app.security import validate_resource_content, valid_resource_url
+from app.services.private_files import (
+    delete_private,
+    download_filename,
+    read_private,
+    write_private,
+)
 from app.states.trainer_state import trainer_course_ids, trainer_guard
 
 logger = logging.getLogger(__name__)
@@ -45,7 +51,7 @@ class ResourceRow(TypedDict):
     description: str
     module: str
     resource_type: str
-    file_name: str
+    has_file: bool
     minutes: int
     published: bool
     is_owner: bool
@@ -103,7 +109,7 @@ class TrainerResourceState(rx.State):
                 select(model.id).where(model.file_name == filename).limit(1)
             ):
                 return
-        (rx.get_upload_dir() / filename).unlink(missing_ok=True)
+        delete_private(filename)
 
     @rx.var
     def allowed_hint(self) -> str:
@@ -153,7 +159,7 @@ class TrainerResourceState(rx.State):
                         "description": resource.description,
                         "module": resource.module_name or "Unsorted module",
                         "resource_type": resource.resource_type,
-                        "file_name": resource.file_name,
+                        "has_file": bool(resource.file_name),
                         "minutes": int(resource.duration_minutes),
                         "published": resource.is_published,
                         "is_owner": resource.uploaded_by_id == trainer_id,
@@ -243,11 +249,8 @@ class TrainerResourceState(rx.State):
             if self._staged_file:
                 async with rx.asession() as session:
                     await self._remove_unreferenced(session, self._staged_file)
-            upload_dir = rx.get_upload_dir()
-            upload_dir.mkdir(parents=True, exist_ok=True)
             stored = safe_file_name(original)
-            with (upload_dir / stored).open("wb") as handle:
-                handle.write(data)
+            write_private(stored, data)
         except Exception as exception:
             logging.exception(f"Error uploading resource file: {exception}")
             self.is_uploading = False
@@ -330,9 +333,7 @@ class TrainerResourceState(rx.State):
                     return
                 content_type, byte_size, digest = "", 0, ""
                 if self._staged_file:
-                    data = (
-                        rx.get_upload_dir() / self._staged_file
-                    ).read_bytes()
+                    data = read_private(self._staged_file)
                     content_type = validate_resource_content(
                         data, Path(self._staged_file).suffix
                     )
@@ -395,6 +396,28 @@ class TrainerResourceState(rx.State):
         ):
             return None
         return resource
+
+    @rx.event
+    async def download_resource(self, resource_id: int):
+        self.error_message = ""
+        trainer_id = await trainer_guard(self)
+        if trainer_id == 0:
+            return
+        try:
+            async with rx.asession() as session:
+                resource = await self._owned(session, resource_id, trainer_id)
+                if resource is None or not resource.file_name:
+                    self.error_message = "That resource file is unavailable."
+                    return
+                data = read_private(resource.file_name)
+                filename = download_filename(resource.title, resource.file_name)
+        except Exception as exception:
+            logging.exception(
+                f"Error downloading resource: {type(exception).__name__}"
+            )
+            self.error_message = "That resource file is unavailable."
+            return
+        return rx.download(data=data, filename=filename)
 
     @rx.event
     async def toggle_publish(self, resource_id: int):

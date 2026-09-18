@@ -100,6 +100,18 @@ def _resource_row(resource: ResourceItem) -> rx.Component:
                     class_name="text-[0.7rem] font-medium text-slate-500",
                 ),
                 rx.cond(
+                    resource["has_file"],
+                    rx.el.button(
+                        "Download file",
+                        rx.icon("download", class_name="h-3.5 w-3.5"),
+                        on_click=lambda: TraineeLearningState.download_resource(
+                            resource["id"]
+                        ),
+                        class_name="flex items-center gap-1 text-[0.7rem] font-semibold text-teal-700 hover:text-teal-600",
+                    ),
+                    rx.fragment(),
+                ),
+                rx.cond(
                     resource["external_url"] != "",
                     rx.el.a(
                         "Open resource",

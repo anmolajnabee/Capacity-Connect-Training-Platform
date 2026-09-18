@@ -56,7 +56,7 @@ from app.security import hash_password
 
 logger = logging.getLogger(__name__)
 
-DEMO_PASSWORD = os.environ.get("CAPACITY_CONNECT_DEMO_PASSWORD", "")
+DEMO_PASSWORD = os.environ.get("CAPACITY_CONNECT_DEMO_PASSWORD", "Demo@123")
 
 DEMO_ACCOUNTS: list[dict[str, str]] = [
     {

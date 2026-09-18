@@ -15,6 +15,8 @@ from app.models import (
     AssessmentResult,
     AssessmentStatus,
     Course,
+    Competency,
+    CourseCompetencyRequirement,
     Enrollment,
     Question,
     QuestionOption,
@@ -57,6 +59,8 @@ class OptionRow(TypedDict):
 
 class QuestionRow(TypedDict):
     id: int
+    competency_id: int
+    competency_label: str
     prompt: str
     explanation: str
     marks: float
@@ -89,6 +93,8 @@ class TrainerAssessmentState(rx.State):
     course_options: list[CourseOption] = []
     results: list[ResultRow] = []
 
+    competency_options: list[CourseOption] = []
+    selected_status: str = ""
     selected_id: int = 0
     selected_title: str = ""
     questions: list[QuestionRow] = []
@@ -109,6 +115,8 @@ class TrainerAssessmentState(rx.State):
                 return question
         return {
             "id": 0,
+            "competency_id": 0,
+            "competency_label": "Not mapped",
             "prompt": "",
             "explanation": "",
             "marks": 1.0,
@@ -247,6 +255,34 @@ class TrainerAssessmentState(rx.State):
             await self._load_questions(session, self.selected_id)
 
     async def _load_questions(self, session, assessment_id: int) -> None:
+        assessment = await session.get(Assessment, assessment_id)
+        self.selected_status = assessment.status if assessment else ""
+        self.competency_options = []
+        if assessment:
+            options = (
+                await session.execute(
+                    select(Competency.id, Competency.name)
+                    .join(
+                        CourseCompetencyRequirement,
+                        CourseCompetencyRequirement.competency_id
+                        == Competency.id,
+                    )
+                    .where(
+                        CourseCompetencyRequirement.course_id
+                        == assessment.course_id,
+                        CourseCompetencyRequirement.requirement_type.in_(
+                            ["outcome", "trainer"]
+                        ),
+                        Competency.is_active.is_(True),
+                    )
+                    .distinct()
+                    .order_by(Competency.name)
+                )
+            ).all()
+            self.competency_options = [
+                {"id": cid, "label": name} for cid, name in options
+            ]
+        labels = {item["id"]: item["label"] for item in self.competency_options}
         questions: list[QuestionRow] = []
         question_rows = (
             await session.scalars(
@@ -275,6 +311,10 @@ class TrainerAssessmentState(rx.State):
             questions.append(
                 {
                     "id": question.id,
+                    "competency_id": question.competency_id or 0,
+                    "competency_label": labels.get(
+                        question.competency_id, "Not mapped"
+                    ),
                     "prompt": question.prompt,
                     "explanation": question.explanation,
                     "marks": float(question.marks),
@@ -311,7 +351,11 @@ class TrainerAssessmentState(rx.State):
             return
         try:
             async with rx.asession() as session:
-                assessment = await session.get(Assessment, assessment_id)
+                assessment = await session.scalar(
+                    select(Assessment)
+                    .where(Assessment.id == assessment_id)
+                    .with_for_update()
+                )
                 if assessment is None or assessment.course_id not in (
                     await trainer_course_ids(session, trainer_id)
                 ):
@@ -333,6 +377,9 @@ class TrainerAssessmentState(rx.State):
 
     @rx.event
     def edit_question(self, question_id: int):
+        if self.selected_status != "draft":
+            self.error_message = "Published questions are read-only."
+            return
         self.editing_question_id = question_id
         self.error_message = ""
         self.success_message = ""
@@ -403,6 +450,10 @@ class TrainerAssessmentState(rx.State):
                     max_attempts=max_attempts,
                     opens_at=dt.datetime.now(dt.UTC),
                     deadline_at=deadline,
+                    shuffle_questions=str(
+                        form_data.get("shuffle_questions", "yes")
+                    )
+                    == "yes",
                 )
                 session.add(assessment)
                 await session.commit()
@@ -448,6 +499,7 @@ class TrainerAssessmentState(rx.State):
             return
         try:
             marks = float(form_data.get("marks") or 1)
+            competency_id = int(form_data.get("competency_id") or 0)
         except ValueError:
             self.error_message = "Marks must be numeric."
             return
@@ -457,11 +509,44 @@ class TrainerAssessmentState(rx.State):
         question_id = self.editing_question_id
         try:
             async with rx.asession() as session:
-                assessment = await session.get(Assessment, self.selected_id)
+                assessment = await session.scalar(
+                    select(Assessment)
+                    .where(Assessment.id == self.selected_id)
+                    .with_for_update()
+                )
                 if assessment is None or assessment.course_id not in (
                     await trainer_course_ids(session, trainer_id)
                 ):
                     self.error_message = "Assessment not available to you."
+                    return
+                if assessment.status != "draft":
+                    self.error_message = (
+                        "Published questions cannot be edited or added."
+                    )
+                    return
+                allowed = await session.scalar(
+                    select(CourseCompetencyRequirement.id)
+                    .join(
+                        Competency,
+                        Competency.id
+                        == CourseCompetencyRequirement.competency_id,
+                    )
+                    .where(
+                        CourseCompetencyRequirement.course_id
+                        == assessment.course_id,
+                        CourseCompetencyRequirement.competency_id
+                        == competency_id,
+                        CourseCompetencyRequirement.requirement_type.in_(
+                            ["outcome", "trainer"]
+                        ),
+                        Competency.is_active.is_(True),
+                    )
+                    .limit(1)
+                )
+                if not allowed:
+                    self.error_message = (
+                        "Select a mapped course competency for this question."
+                    )
                     return
                 if question_id:
                     question = await session.get(Question, question_id)
@@ -480,6 +565,7 @@ class TrainerAssessmentState(rx.State):
                     ).all()
                     for option in stale_options:
                         await session.delete(option)
+                    question.competency_id = competency_id
                     question.prompt = prompt
                     question.marks = marks
                     question.explanation = str(
@@ -494,6 +580,7 @@ class TrainerAssessmentState(rx.State):
                     )
                     question = Question(
                         assessment_id=assessment.id,
+                        competency_id=competency_id,
                         prompt=prompt,
                         explanation=str(
                             form_data.get("explanation", "")
@@ -543,13 +630,20 @@ class TrainerAssessmentState(rx.State):
                 if question is None:
                     self.error_message = "Question not found."
                     return
-                assessment = await session.get(
-                    Assessment, question.assessment_id
+                assessment = await session.scalar(
+                    select(Assessment)
+                    .where(Assessment.id == question.assessment_id)
+                    .with_for_update()
                 )
                 if assessment is None or assessment.course_id not in (
                     await trainer_course_ids(session, trainer_id)
                 ):
                     self.error_message = "You cannot edit that assessment."
+                    return
+                if assessment.status != "draft":
+                    self.error_message = (
+                        "Published questions cannot be deleted."
+                    )
                     return
                 await session.delete(question)
                 await session.flush()
@@ -616,6 +710,9 @@ class TrainerAssessmentState(rx.State):
                     self.error_message = "The deadline has already passed."
                     return
                 for question in questions:
+                    if question.competency_id is None:
+                        self.error_message = "Every question must have a competency before publication."
+                        return
                     correct = (
                         await session.scalars(
                             select(QuestionOption).where(

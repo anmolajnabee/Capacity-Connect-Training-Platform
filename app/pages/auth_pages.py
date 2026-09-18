@@ -4,7 +4,6 @@ import reflex as rx
 
 from app.components.auth_forms import (
     auth_card,
-    demo_credentials_panel,
     field_label,
     submit_button,
     text_field,
@@ -165,7 +164,6 @@ def signup_page() -> rx.Component:
                 "Trainees land straight in the trainee workspace. Trainer and administrator requests create an approval record that an administrator must decide before the workspace unlocks.",
                 "route",
             ),
-            demo_credentials_panel(),
             class_name="flex w-full flex-col gap-5",
         ),
     )

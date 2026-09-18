@@ -41,15 +41,11 @@ def _dropzone() -> rx.Component:
             max_files=1,
             accept={
                 "video/mp4": [".mp4"],
-                "video/quicktime": [".mov"],
                 "video/webm": [".webm"],
-                "video/x-matroska": [".mkv"],
                 "application/pdf": [".pdf"],
-                "application/msword": [".doc"],
                 "application/vnd.openxmlformats-officedocument.wordprocessingml.document": [
                     ".docx"
                 ],
-                "application/vnd.ms-powerpoint": [".ppt"],
                 "application/vnd.openxmlformats-officedocument.presentationml.presentation": [
                     ".pptx"
                 ],
@@ -58,7 +54,6 @@ def _dropzone() -> rx.Component:
                 "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet": [
                     ".xlsx"
                 ],
-                "application/zip": [".zip"],
             },
             on_drop=TrainerResourceState.handle_upload(
                 rx.upload_files(upload_id=UPLOAD_ID)
@@ -297,7 +292,7 @@ def _library_stats() -> rx.Component:
 def _upload_panel() -> rx.Component:
     return panel(
         "Upload new material",
-        "Stage a file, then record its module, title and visibility. Uploads are validated by extension and size.",
+        "Stage a file, then record its module, title and visibility. Uploads are checked for format structure, content and size; SHA-256 integrity metadata is recorded.",
         rx.cond(
             TrainerResourceState.has_courses,
             rx.el.div(

@@ -1,0 +1,1785 @@
+CAPACITY CONNECT — FINAL REPAIR, INTEGRATION, SECURITY & PRODUCTION VERIFICATION
+
+PROJECT:
+CAPACITY CONNECT — SIH 2026
+Problem Statement: SIH26075
+Target organization/domain: Ministry of Earth Sciences / India Meteorological Department
+Product type: Competency-driven digital capacity-building and training platform
+
+IMPORTANT:
+This is NOT a request to rebuild the application from scratch.
+
+You are working on an EXISTING CAPACITY CONNECT CODEBASE.
+
+Your job is:
+
+AUDIT → FIND → FIX → INTEGRATE → SECURE → TEST → VERIFY → BUILD
+
+Do not blindly create duplicate features.
+Do not replace working functionality unnecessarily.
+Do not delete existing working functionality.
+Do not create fake/mock functionality to make a feature appear complete.
+Do not mark a feature complete merely because a page, route, model, or button exists.
+
+The final application must be a genuinely working, database-backed, role-secured, production-style application.
+
+==================================================
+1. FIRST: UNDERSTAND THE EXISTING CODEBASE
+==================================================
+
+Before modifying anything, inspect the ENTIRE project.
+
+Inspect:
+
+- app/
+- all Python files
+- models
+- states
+- services
+- routes
+- components
+- pages
+- authentication
+- authorization
+- database layer
+- migrations
+- seed/demo data
+- file upload/storage
+- AI integration
+- certificate generation
+- QR verification
+- requirements.txt
+- rxconfig.py
+- reflex.lock
+- assets
+- db_migrations
+- plan.md
+- wireframe.json
+- environment variable usage
+- deployment configuration
+
+Do NOT assume plan.md is proof that something works.
+
+Treat plan.md only as a development intention/checklist.
+
+Create:
+
+CAPACITY_CONNECT_FINAL_AUDIT.md
+
+Before fixing anything, create a feature audit matrix.
+
+For EVERY major feature determine:
+
+1. UI exists?
+2. Route exists?
+3. Backend/service exists?
+4. Database model exists?
+5. Database persistence works?
+6. Real data is used?
+7. Business logic exists?
+8. Authorization exists?
+9. Validation exists?
+10. Error handling exists?
+11. Loading state exists?
+12. Empty state exists?
+13. Success state exists?
+14. Refresh persistence works?
+15. Cross-role workflow works?
+16. Security tested?
+17. Automated test exists?
+18. Deployment/runtime tested?
+
+Use exactly these statuses:
+
+IMPLEMENTED
+PARTIALLY_IMPLEMENTED
+MISSING
+BROKEN
+INSECURE
+MOCKED
+NOT_VERIFIED
+
+Do not call something IMPLEMENTED merely because the frontend displays it.
+
+==================================================
+2. PROTECT EXISTING FUNCTIONALITY
+==================================================
+
+Before major changes:
+
+- understand current architecture
+- identify working modules
+- preserve existing routes
+- preserve working database records
+- preserve existing migrations
+- preserve authentication
+- preserve existing role dashboards
+- preserve existing competency framework
+- preserve trainer matching
+- preserve certificates
+- preserve learning paths
+
+If a feature already works, improve it instead of rewriting it.
+
+If there are duplicate implementations, identify the canonical implementation and safely consolidate them.
+
+Do NOT create duplicate:
+
+- competency engines
+- trainer matching engines
+- assessment systems
+- certificate systems
+- learning path systems
+- authentication systems
+- notification systems
+
+There must be ONE authoritative implementation for each core business capability.
+
+==================================================
+3. REQUIRED PRODUCT ARCHITECTURE
+==================================================
+
+CAPACITY CONNECT is NOT simply an LMS.
+
+Its core business loop must be:
+
+ORGANIZATIONAL NEED
+        ↓
+REQUIRED COMPETENCIES
+        ↓
+COMPETENCY GAP
+        ↓
+AFFECTED TRAINEES
+        ↓
+TRAINER FIT
+        ↓
+TRAINER / TRAINER TEAM
+        ↓
+TRAINING
+        ↓
+LEARNING
+        ↓
+PRACTICE
+        ↓
+OFFICIAL ASSESSMENT
+        ↓
+VERIFIED COMPETENCY EVIDENCE
+        ↓
+COMPETENCY UPDATE
+        ↓
+COMPETENCY PASSPORT
+        ↓
+TRAINING EFFECTIVENESS
+        ↓
+ORGANIZATIONAL CAPACITY IMPROVEMENT
+
+Every part of this chain must use REAL persistent database data.
+
+No isolated demo pages.
+
+==================================================
+4. SIH MANDATORY FEATURES
+==================================================
+
+Verify and repair all mandatory requirements.
+
+TRAINEE:
+
+- secure signup/login
+- trainee profile
+- qualifications
+- work experience
+- interests
+- skills
+- certificates
+- course discovery
+- course enrollment
+- learning resources
+- recorded lectures
+- presentations
+- study materials
+- subject-wise MCQ assessments
+- assessment attempts
+- assessment results
+- feedback
+- notifications
+- personalized learning
+- competency evidence
+- competency passport
+- certificates
+- certificate verification
+
+TRAINER:
+
+- secure login
+- trainer profile
+- qualifications
+- expertise
+- experience
+- competencies
+- create questionnaires
+- questionnaire deadlines
+- trainee participation
+- performance monitoring
+- upload recorded lectures
+- upload presentations
+- upload study materials
+- trainer library
+- assign learning/training
+- monitor trainees
+- trainer availability
+- trainer capacity
+- trainer effectiveness
+
+ADMIN:
+
+- secure login
+- approve users
+- reject users
+- activate/deactivate users
+- role management
+- course management
+- trainer management
+- assessment management
+- certification management
+- dashboards
+- course analytics
+- enrollment analytics
+- certification analytics
+- assessment analytics
+- participation analytics
+- notifications
+- announcements
+- achievements
+- learning-content publishing
+- competency mapping
+- organizational competency gaps
+- trainer matching
+- team matching
+- training effectiveness
+- reports
+
+==================================================
+5. COMPETENCY FRAMEWORK
+==================================================
+
+The competency architecture must remain structured.
+
+Use:
+
+SUBJECT
+    ↓
+COMPETENCY
+    ↓
+REQUIRED PROFICIENCY
+    ↓
+TRAINEE CURRENT PROFICIENCY
+    ↓
+GAP
+    ↓
+EVIDENCE
+    ↓
+TRAINING
+    ↓
+ASSESSMENT
+    ↓
+VERIFICATION
+
+Competency levels:
+
+1 = Beginner
+2 = Developing
+3 = Proficient
+4 = Advanced
+5 = Expert
+
+Do not treat competency as simple free-text skills.
+
+Do not allow AI to invent official competency levels.
+
+Competency levels must be backed by evidence.
+
+==================================================
+6. COMPETENCY GAP ENGINE
+==================================================
+
+Implement/verify:
+
+GAP = REQUIRED_LEVEL - CURRENT_LEVEL
+
+Rules:
+
+- if current level is NULL, treat it as UNMEASURED
+- do not silently treat NULL as zero
+- gap must never be negative
+- current level must stay between 1 and 5
+- required level must stay between 1 and 5
+
+For every gap store enough information to trace:
+
+- trainee
+- organization
+- department
+- role
+- subject
+- competency
+- required level
+- current level
+- gap
+- evidence
+- last verification
+- status
+
+Example:
+
+Velocity Interpretation
+Required = 4
+Current = 2
+Gap = 2
+
+This should become actionable training data.
+
+==================================================
+7. ORGANIZATIONAL COMPETENCY MAP
+==================================================
+
+Admin must be able to see:
+
+Organization
+Department
+Role
+Subject
+Competency
+Required Level
+Current Average
+Gap
+Affected Trainees
+Unmeasured Trainees
+Verified Trainees
+Training Demand
+
+Clicking a competency gap must allow the admin to navigate into:
+
+GAP
+→ AFFECTED TRAINEES
+→ REQUIRED TRAINING
+→ FIND TRAINERS
+→ TRAINER FIT
+→ ASSIGN TRAINER/TRAINING
+
+Do not make this merely an analytics visualization.
+
+It must be actionable.
+
+==================================================
+8. TRAINER FIT ENGINE
+==================================================
+
+There must be ONE authoritative trainer-fit service.
+
+Hard eligibility must be evaluated BEFORE scoring.
+
+Check:
+
+- trainer role
+- active status
+- approval status
+- competency coverage
+- mandatory competencies
+- availability
+- conflicts
+- capacity
+
+Default configurable scoring:
+
+Competency Coverage = 40%
+Domain Alignment = 25%
+Experience = 15%
+Qualification = 10%
+Observed Training Effectiveness = 10%
+
+Formula:
+
+score =
+coverage * 0.40
++ domain_alignment * 0.25
++ experience * 0.15
++ qualification * 0.10
++ effectiveness * 0.10
+
+IMPORTANT:
+
+These weights are implementation defaults, not official SIH weights.
+
+Store the scoring policy/version centrally.
+
+Do not have multiple conflicting scoring formulas in different files.
+
+Every match must explain:
+
+- total score
+- competency coverage
+- domain alignment
+- experience
+- qualification
+- effectiveness
+- eligibility results
+- covered competencies
+- missing competencies
+- availability
+- capacity
+
+Call it:
+
+TRAINER FIT SCORE
+
+Do not call it AI confidence.
+
+==================================================
+9. TRAINER TEAM MATCHING
+==================================================
+
+If no single trainer covers all required competencies:
+
+find a small trainer team.
+
+Example:
+
+Trainer A:
+Radar Fundamentals
+Reflectivity Analysis
+
+Trainer B:
+Velocity Interpretation
+
+Trainer C:
+Radar Data Quality
+
+The UI must show:
+
+- selected trainers
+- competencies covered by each
+- total coverage
+- missing competencies
+- combined score/fit explanation
+- availability
+- capacity
+- reason for team selection
+
+Do not display a fake team recommendation.
+
+It must be calculated from real database data.
+
+==================================================
+10. LEARNING PATH
+==================================================
+
+The learning path must be generated from REAL competency gaps.
+
+Required flow:
+
+Competency Gap
+↓
+Learning Objective
+↓
+Course
+↓
+Module
+↓
+Learning Resource
+↓
+Practice
+↓
+Official Assessment
+↓
+Evidence
+↓
+Reassessment if necessary
+
+Learning paths must persist in the database.
+
+Do not generate the entire path only in frontend state.
+
+After refresh, the path must still exist.
+
+Progress must persist.
+
+Completion must be calculated from actual activity.
+
+==================================================
+11. OFFICIAL ASSESSMENTS
+==================================================
+
+Official assessments must be secure.
+
+Support:
+
+- questions
+- options
+- correct answers
+- marks
+- passing marks
+- duration
+- deadline
+- maximum attempts
+- shuffle
+- subject
+- competency
+- difficulty
+- attempts
+- results
+- pass/fail
+
+CRITICAL SECURITY RULE:
+
+The client must NEVER be trusted for:
+
+- score
+- pass/fail
+- correct answer
+- timer
+- deadline
+- attempt count
+- competency award
+
+All official scoring must happen server-side.
+
+Correct answers must never be exposed to the client before submission.
+
+Prevent:
+
+- score manipulation
+- duplicate attempts
+- expired-attempt submission
+- deadline bypass
+- answer tampering
+- client-side pass manipulation
+- competency manipulation
+
+Test these explicitly.
+
+==================================================
+12. ADAPTIVE PRACTICE
+==================================================
+
+Practice must remain separate from official assessment.
+
+Practice can influence recommendations.
+
+Practice alone must NOT establish official competency.
+
+Implement/verify:
+
+GAP
+↓
+WEAK COMPETENCY
+↓
+WEAK CONCEPT
+↓
+TARGETED PRACTICE
+↓
+PERFORMANCE
+↓
+DIFFICULTY ADAPTATION
+↓
+TARGETED RESOURCE
+
+If AI is unavailable, database-backed question bank must still work.
+
+Practice results must not directly grant verified competency.
+
+==================================================
+13. CAPACITY AI
+==================================================
+
+This is a HIGH PRIORITY feature.
+
+Do not merely install an AI SDK.
+
+CAPACITY AI must actually function.
+
+It must be a contextual learning assistant, NOT a generic chatbot.
+
+It should understand, where available:
+
+- current trainee
+- current course
+- current module
+- current competency
+- competency gap
+- recent assessment
+- weak concepts
+- approved learning resources
+- learning path
+- practice history
+
+Supported actions:
+
+1. Explain concept
+2. Summarize approved resource
+3. Explain assessment mistake
+4. Generate practice questions
+5. Recommend learning resource
+6. Recommend next learning step
+
+IMPORTANT:
+
+AI must not:
+
+- assign official competency
+- override assessment scores
+- modify pass/fail
+- create certificates
+- bypass permissions
+- access another trainee's private information
+
+Use server-side API keys only.
+
+Never expose AI secrets in frontend code.
+
+Implement graceful fallback if AI is unavailable.
+
+The application must remain usable without AI.
+
+For AI-generated answers:
+
+- validate output
+- handle malformed output
+- handle timeout
+- handle quota errors
+- handle provider failure
+- avoid leaking private data
+- limit prompt size
+- sanitize user input
+- prevent prompt injection from changing system rules
+
+Create a clear UI indicator that CAPACITY AI provides assistance and does not replace official assessment.
+
+==================================================
+14. TRAINING EFFECTIVENESS
+==================================================
+
+Implement real training effectiveness.
+
+Use evidence such as:
+
+- participants
+- completion
+- pre-training competency
+- post-training competency
+- assessment improvement
+- pass rate
+- feedback
+- observed competency improvement
+- participation
+
+Calculate:
+
+IMPROVEMENT = POST - PRE
+
+Do not claim causation.
+
+Use wording such as:
+
+Observed competency improvement.
+
+Trainer effectiveness may feed into future Trainer Fit scoring.
+
+Avoid circular scoring.
+
+==================================================
+15. COMPETENCY EVIDENCE
+==================================================
+
+Every official competency level must have provenance.
+
+Possible evidence:
+
+- official assessment
+- trainer evaluation
+- questionnaire
+- verified observation
+- approved competency evaluation
+
+Clearly distinguish:
+
+VERIFIED EVIDENCE
+
+from:
+
+- practice
+- course completion
+- AI recommendation
+- self-declared skill
+
+Course completion alone must NOT equal competency mastery.
+
+==================================================
+16. COMPETENCY PASSPORT
+==================================================
+
+Passport must display:
+
+- competency
+- current level
+- target level
+- progress
+- verification status
+- last verified date
+- evidence source
+- supporting assessment/training
+
+Every number must come from database data.
+
+No fake 82%, 95%, etc.
+
+==================================================
+17. CERTIFICATES
+==================================================
+
+Certificate must include:
+
+- certificate ID
+- trainee
+- training/course
+- competency where applicable
+- issue date
+- issuer
+- status
+- verification code
+- QR code
+
+Verification route:
+
+/verify/:certificateId
+
+Verification must query the real database.
+
+Do not trust certificate data supplied by the client.
+
+Support:
+
+VALID
+REVOKED
+NOT FOUND
+
+If QR generation exists, verify the QR actually points to the correct verification URL.
+
+==================================================
+18. AUTHENTICATION & AUTHORIZATION
+==================================================
+
+Audit every protected route.
+
+Roles:
+
+TRAINEE
+TRAINER
+ADMIN
+
+Prevent:
+
+- role escalation
+- unauthorized route access
+- IDOR
+- accessing another user's profile
+- accessing another trainee's results
+- accessing another trainer's private information
+- unauthorized file downloads
+- unauthorized certificate modification
+- unauthorized assessment modification
+- unauthorized competency modification
+
+Never trust:
+
+- URL IDs
+- frontend role values
+- hidden UI controls
+- client-submitted ownership
+
+Authorization must happen server-side.
+
+==================================================
+19. SECURITY AUDIT
+==================================================
+
+Perform a complete security audit.
+
+Check:
+
+AUTHENTICATION
+- password hashing
+- session handling
+- session expiry
+- logout
+- password reset
+- brute-force resistance where practical
+
+AUTHORIZATION
+- RBAC
+- ownership checks
+- admin-only operations
+- trainer-only operations
+- trainee-only operations
+
+INPUT SECURITY
+- SQL injection
+- XSS
+- HTML injection
+- malicious filenames
+- invalid UUID/IDs
+- invalid dates
+- enum manipulation
+- oversized input
+- unexpected types
+
+FILE UPLOADS
+- size limits
+- extension validation
+- MIME validation
+- filename sanitization
+- storage isolation
+- authorization on download
+- executable upload prevention
+
+ASSESSMENTS
+- answer tampering
+- score tampering
+- deadline bypass
+- timer bypass
+- attempt bypass
+
+CERTIFICATES
+- verification manipulation
+- ID guessing
+- unauthorized issuance
+- unauthorized revocation
+
+AI
+- API key exposure
+- prompt injection
+- data leakage
+- excessive prompt size
+- provider errors
+
+DATABASE
+- constraints
+- foreign keys
+- invalid orphan records
+- duplicate records
+- nullability
+- indexes where appropriate
+
+SECRETS
+- no API keys in source
+- no passwords in source
+- no production credentials in seed files
+- no secrets in frontend bundle
+
+==================================================
+20. REMOVE FAKE / MOCK / DEMO-ONLY BEHAVIOR
+==================================================
+
+Search entire codebase for:
+
+TODO
+FIXME
+pass
+NotImplemented
+placeholder
+mock
+fake
+dummy
+sample
+hardcoded
+console.log
+static percentage
+static score
+static count
+fake notification
+fake certificate
+fake analytics
+fake trainer match
+fake progress
+
+For every finding:
+
+Determine whether it is legitimate.
+
+If it represents a production feature:
+
+REPLACE IT WITH REAL IMPLEMENTATION.
+
+Do not merely hide the mock.
+
+==================================================
+21. FRONTEND FUNCTIONALITY AUDIT
+==================================================
+
+Click/test every important button.
+
+Buttons must not:
+
+- do nothing
+- only show a toast
+- print to console
+- navigate to unrelated pages
+- use fake data
+
+Test:
+
+Create
+Edit
+Delete
+Approve
+Reject
+Enroll
+Upload
+Download
+Submit
+Assign
+Match
+Generate
+Verify
+Complete
+Publish
+Archive
+Revoke
+
+Every operation must have:
+
+- loading
+- success
+- failure
+- validation
+- empty state
+- refresh persistence
+
+==================================================
+22. ERROR HANDLING
+==================================================
+
+Test:
+
+- database unavailable
+- API failure
+- invalid input
+- expired session
+- unauthorized access
+- upload failure
+- AI unavailable
+- malformed AI response
+- assessment timeout
+- duplicate enrollment
+- duplicate submission
+- missing resource
+- invalid certificate
+- deleted user
+- missing competency
+- missing trainer
+
+Never show raw stack traces to end users.
+
+Provide useful user-facing messages.
+
+Log detailed errors server-side.
+
+==================================================
+23. DATA INTEGRITY
+==================================================
+
+Audit relationships.
+
+Ensure:
+
+- deleting a user does not leave broken records
+- deleted course cannot create invalid enrollment
+- assessment belongs to valid course/training
+- question belongs to valid assessment
+- attempt belongs to correct trainee
+- evidence belongs to correct trainee/competency
+- certificate belongs to correct trainee
+- trainer assignment belongs to valid trainer
+- learning path belongs to correct trainee
+- competency gap belongs to correct requirement
+
+Use database constraints where appropriate.
+
+==================================================
+24. SEED / DEMO DATA
+==================================================
+
+Ensure a deterministic demo environment exists.
+
+Use:
+
+TRAINEE:
+Anmol Kumar
+Role: Weather Forecaster
+
+Example verified/initial competency evidence:
+
+Radar Fundamentals = 4
+Velocity Interpretation = 2
+Data Interpretation = 2
+
+TRAINER:
+Dr. Raj Sharma
+
+Expertise:
+- Doppler Radar
+- Radar Meteorology
+- Weather Data Analysis
+
+ADMIN:
+System Administrator
+
+Do NOT hardcode passwords into source code.
+
+Use development seed configuration/environment variables.
+
+Demo data must be inserted into the database.
+
+Frontend must retrieve it from the database.
+
+==================================================
+25. REQUIRED DEMO SCENARIO
+==================================================
+
+This exact scenario must work.
+
+STEP 1 — ADMIN
+
+Login as Admin.
+
+Open:
+
+Organizational Competency Map.
+
+Find:
+
+Doppler Radar
+→ Velocity Interpretation
+
+Show:
+
+Required Level
+Current Level
+Gap
+Affected Trainees
+
+Open affected trainee.
+
+STEP 2 — TRAINER MATCHING
+
+Click:
+
+Find Trainers
+
+Run Trainer Fit.
+
+Show:
+
+Trainer Fit Score
+Competency Coverage
+Domain Alignment
+Experience
+Qualification
+Effectiveness
+Availability
+Capacity
+Explanation
+
+Select/assign trainer.
+
+STEP 3 — TRAINEE
+
+Login as Anmol Kumar.
+
+Open:
+
+Competency Gap.
+
+Show:
+
+Velocity Interpretation
+Required = 4
+Current = 2
+Gap = 2
+
+Open personalized Learning Path.
+
+STEP 4 — LEARNING
+
+Open assigned course.
+
+Open module/resource.
+
+Complete learning activity.
+
+STEP 5 — PRACTICE
+
+Open adaptive practice.
+
+Practice weak competency.
+
+Verify practice does NOT directly grant verified mastery.
+
+STEP 6 — OFFICIAL ASSESSMENT
+
+Take official assessment.
+
+Verify:
+
+- timer
+- deadline
+- attempt limit
+- server-side scoring
+- pass/fail
+- result persistence
+
+STEP 7 — EVIDENCE
+
+After valid official assessment:
+
+Create/update competency evidence.
+
+Recalculate competency.
+
+Verify gap changes appropriately.
+
+STEP 8 — PASSPORT
+
+Open Competency Passport.
+
+Verify new verified competency level appears.
+
+Show evidence provenance.
+
+STEP 9 — CERTIFICATE
+
+If eligibility conditions are met:
+
+Generate certificate.
+
+Open verification URL.
+
+Scan/open QR.
+
+Verify:
+
+VALID certificate
+
+STEP 10 — EFFECTIVENESS
+
+Admin opens Training Effectiveness.
+
+Show:
+
+participants
+completion
+pre competency
+post competency
+observed improvement
+assessment performance
+feedback
+
+STEP 11 — TRAINER EFFECTIVENESS
+
+Verify observed effectiveness can feed the trainer-fit system according to the configured scoring policy.
+
+==================================================
+26. LIVE DEPLOYMENT VERIFICATION
+==================================================
+
+Do not assume local development means production works.
+
+Verify the deployed environment.
+
+Check:
+
+- homepage
+- signup
+- login
+- logout
+- role routing
+- database connection
+- migrations
+- seed/demo data
+- file storage
+- certificate generation
+- certificate verification
+- AI
+- notifications
+- uploads
+- downloads
+- responsive UI
+
+Check browser console for errors.
+
+Check server logs for exceptions.
+
+Check failed network/API calls.
+
+Fix production-specific failures.
+
+==================================================
+27. RESPONSIVE UI
+==================================================
+
+Test:
+
+Desktop
+Laptop
+Tablet
+Mobile
+
+Minimum:
+
+360px
+390px
+768px
+1024px
+1440px
+
+Fix:
+
+- horizontal overflow
+- broken tables
+- clipped modals
+- inaccessible buttons
+- unreadable charts
+- sidebar problems
+- mobile navigation
+- form overflow
+
+==================================================
+28. ACCESSIBILITY
+==================================================
+
+Check:
+
+- keyboard navigation
+- focus states
+- labels
+- form errors
+- color contrast
+- semantic headings
+- accessible buttons
+- meaningful icons
+- reduced motion
+
+Do not rely on color alone to communicate:
+
+pass/fail
+gap severity
+verification
+status
+
+==================================================
+29. UI QUALITY
+==================================================
+
+Preserve the CAPACITY CONNECT identity:
+
+Professional
+Government/enterprise
+Scientific
+Premium
+Data-driven
+
+Visual direction:
+
+Deep blue
+White
+Soft sky blue
+Subtle green
+Very limited orange
+
+Avoid:
+
+- excessive gradients
+- excessive glassmorphism
+- generic LMS appearance
+- giant empty hero sections
+- excessive rounded cards
+- stock-photo-heavy design
+- unnecessary animation
+
+Use subtle animations only where they improve usability.
+
+Respect reduced-motion preferences.
+
+==================================================
+30. LEGACY FUNCTIONALITY
+==================================================
+
+Find older/duplicate functionality such as:
+
+legacy skill matching
+old competency matching
+duplicate trainer matching
+old learning path logic
+duplicate assessment logic
+
+Do not delete blindly.
+
+Determine which implementation is canonical.
+
+If an older implementation is obsolete:
+
+- migrate dependencies
+- redirect old routes where appropriate
+- remove dead code only after confirming nothing depends on it
+- document the consolidation
+
+There must be one authoritative source of truth.
+
+==================================================
+31. TESTING
+==================================================
+
+Create or repair automated tests.
+
+At minimum test:
+
+AUTH
+- login
+- logout
+- invalid login
+- role protection
+
+COMPETENCY
+- gap calculation
+- NULL/unmeasured
+- level boundaries
+- evidence provenance
+
+TRAINER FIT
+- eligibility
+- score calculation
+- missing competency
+- unavailable trainer
+- capacity conflict
+- explanation
+
+ASSESSMENT
+- server-side scoring
+- attempt limits
+- deadline
+- timer
+- pass/fail
+
+LEARNING PATH
+- creation
+- persistence
+- progress
+
+CERTIFICATE
+- generation
+- verification
+- invalid certificate
+- revoked certificate
+
+AUTHORIZATION
+- trainee cannot access trainer/admin data
+- trainer cannot access admin functions
+- users cannot access other users' private records
+
+AI
+- successful response
+- provider failure
+- malformed response
+- no API key
+- privacy protection
+
+==================================================
+32. STATIC CODE QUALITY
+==================================================
+
+Run:
+
+- syntax checks
+- type checks if applicable
+- lint
+- tests
+- migration checks
+- build
+- deployment build
+
+Fix all real errors.
+
+Do not suppress errors just to obtain a green build.
+
+==================================================
+33. PERFORMANCE
+==================================================
+
+Look for:
+
+- N+1 queries
+- repeated database queries
+- unnecessary full-table loads
+- slow dashboards
+- excessive state refresh
+- large file loads
+- duplicate API calls
+
+Optimize only where evidence shows a problem.
+
+Do not sacrifice correctness for premature optimization.
+
+==================================================
+34. DOCUMENTATION
+==================================================
+
+Create/update:
+
+CAPACITY_CONNECT_FINAL_AUDIT.md
+CAPACITY_CONNECT_SECURITY_AUDIT.md
+CAPACITY_CONNECT_TEST_REPORT.md
+CAPACITY_CONNECT_ARCHITECTURE.md
+CAPACITY_CONNECT_DEMO_GUIDE.md
+
+Architecture documentation must show:
+
+Frontend/UI
+↓
+State
+↓
+Services
+↓
+Database
+↓
+Authentication
+↓
+Authorization
+↓
+External services
+
+Document:
+
+- environment variables
+- database setup
+- migrations
+- seed process
+- local run
+- production run
+- AI setup
+- storage setup
+- demo accounts
+- demo flow
+
+==================================================
+35. FINAL FEATURE STATUS
+==================================================
+
+At the end, produce a table:
+
+FEATURE | STATUS | VERIFIED HOW | FILES/ROUTES | NOTES
+
+Features:
+
+Authentication
+RBAC
+Trainee profile
+Trainer profile
+Admin control
+Courses
+Enrollment
+Resources
+Trainer library
+Assessments
+Questionnaires
+Feedback
+Notifications
+Announcements
+Competency framework
+Competency evidence
+Competency gaps
+Organizational competency map
+Trainer Fit
+Explainable matching
+Trainer team matching
+Learning paths
+Adaptive practice
+CAPACITY AI
+Training effectiveness
+Competency passport
+Certificates
+QR verification
+Security
+Responsive UI
+Accessibility
+Production deployment
+
+Use only:
+
+IMPLEMENTED
+PARTIALLY_IMPLEMENTED
+MISSING
+BROKEN
+INSECURE
+NOT_VERIFIED
+
+Do not claim IMPLEMENTED unless actually tested.
+
+==================================================
+36. PRIORITY ORDER
+==================================================
+
+If time/resource constraints occur, work in this exact priority order.
+
+P0 — MUST WORK:
+
+1. Authentication
+2. RBAC
+3. Trainee
+4. Trainer
+5. Admin
+6. Courses
+7. Enrollment
+8. Resources
+9. Official assessments
+10. Questionnaires
+11. Participation
+12. Performance
+13. Feedback
+14. Notifications
+15. Announcements
+16. Certificates
+
+P1 — CORE DIFFERENTIATORS:
+
+17. Competency framework
+18. Competency evidence
+19. Competency gap
+20. Organizational competency map
+21. Trainer Fit
+22. Explainable matching
+23. Team matching
+24. Personalized learning path
+25. Training effectiveness
+26. Competency passport
+
+P2 — INTELLIGENCE:
+
+27. Adaptive practice
+28. CAPACITY AI
+29. Advanced analytics
+30. Advanced reporting
+
+NEVER sacrifice P0/P1 for visual gimmicks.
+
+==================================================
+37. FINAL ACCEPTANCE CRITERIA
+==================================================
+
+The project is NOT finished until:
+
+- application starts successfully
+- database connects
+- migrations succeed
+- authentication works
+- all three roles work
+- authorization is enforced
+- core SIH workflows work
+- no critical dead buttons remain
+- no core mock data remains
+- no fake scores remain
+- no fake analytics remain
+- assessment scoring is server-side
+- competency evidence is persisted
+- trainer matching is calculated from real data
+- learning path persists
+- certificate verification works
+- AI works OR has a documented graceful fallback
+- security tests pass
+- responsive tests pass
+- major error states work
+- build succeeds
+- deployment works
+
+Most importantly, this exact flow must work:
+
+ADMIN
+→ ORGANIZATIONAL GAP
+→ AFFECTED TRAINEE
+→ TRAINER FIT
+→ TRAINER ASSIGNMENT
+→ TRAINING
+
+TRAINEE
+→ GAP
+→ LEARNING PATH
+→ RESOURCE
+→ PRACTICE
+→ OFFICIAL ASSESSMENT
+→ VERIFIED EVIDENCE
+→ COMPETENCY UPDATE
+→ PASSPORT
+→ CERTIFICATE
+→ QR VERIFICATION
+
+ADMIN
+→ TRAINING EFFECTIVENESS
+→ OBSERVED IMPROVEMENT
+→ TRAINER EFFECTIVENESS
+
+==================================================
+38. IMPORTANT ENGINEERING RULES
+==================================================
+
+DO NOT:
+
+- rebuild from scratch
+- delete working modules
+- create duplicate systems
+- use frontend-only fake data
+- hardcode analytics
+- trust client-side scores
+- trust client-side roles
+- expose secrets
+- expose correct answers
+- allow IDOR
+- let AI assign official competency
+- let practice grant official mastery
+- claim causal training effectiveness
+- add blockchain
+- add metaverse
+- add unnecessary social features
+- add unrelated weather forecasting functionality
+- add gimmicks just for SIH
+
+DO:
+
+- reuse existing architecture
+- preserve working functionality
+- consolidate duplicates
+- make workflows connected
+- use real database state
+- validate server-side
+- secure every mutation
+- test every important workflow
+- document limitations honestly
+
+==================================================
+39. FINAL REPORT
+==================================================
+
+At the end, provide a concise final report containing:
+
+1. What was already working
+2. What was missing
+3. What was broken
+4. What was mocked
+5. What you fixed
+6. What security vulnerabilities you found
+7. What security fixes you made
+8. What tests were run
+9. Which tests passed
+10. Which tests failed
+11. Which features remain NOT_VERIFIED
+12. AI status
+13. Database status
+14. Authentication status
+15. Authorization status
+16. Competency engine status
+17. Trainer Fit status
+18. Assessment security status
+19. Certificate verification status
+20. Production deployment status
+21. Exact demo credentials/method if configured
+22. Exact demo sequence
+23. Any remaining limitations
+
+Do not say:
+
+"Everything is implemented"
+
+unless you actually verified it.
+
+If something cannot be verified because an external service/environment variable is unavailable, explicitly state:
+
+NOT_VERIFIED — REASON
+
+==================================================
+40. FINAL COMMAND
+==================================================
+
+Now begin.
+
+PHASE A:
+Inspect the complete existing project.
+
+PHASE B:
+Create the audit matrix.
+
+PHASE C:
+Identify all missing, partial, broken, insecure and mocked features.
+
+PHASE D:
+Fix P0.
+
+PHASE E:
+Fix P1.
+
+PHASE F:
+Fix P2.
+
+PHASE G:
+Integrate the complete business workflow.
+
+PHASE H:
+Perform security audit.
+
+PHASE I:
+Perform automated testing.
+
+PHASE J:
+Perform live/deployment verification.
+
+PHASE K:
+Fix all failures.
+
+PHASE L:
+Run the complete end-to-end demo.
+
+PHASE M:
+Generate the final audit, security report, test report, architecture document and demo guide.
+
+DO NOT STOP AFTER REPORTING PROBLEMS.
+
+IF YOU FIND A MISSING OR BROKEN FEATURE:
+IMPLEMENT IT.
+
+IF YOU FIND A SECURITY VULNERABILITY:
+FIX IT.
+
+IF YOU FIND A DUPLICATE IMPLEMENTATION:
+CONSOLIDATE IT SAFELY.
+
+IF YOU FIND MOCK DATA:
+REPLACE IT WITH REAL DATABASE LOGIC.
+
+IF YOU FIND A DEAD BUTTON:
+CONNECT IT TO THE REAL BACKEND WORKFLOW.
+
+IF YOU FIND A CLIENT-TRUSTED VALUE:
+MOVE VALIDATION/AUTHORITY TO THE SERVER.
+
+IF YOU FIND AN UNVERIFIED FEATURE:
+TEST IT.
+
+FINAL PRINCIPLE:
+
+AUDIT
+→ FIND
+→ FIX
+→ INTEGRATE
+→ SECURE
+→ TEST
+→ VERIFY
+→ BUILD
+
+CAPACITY CONNECT IS COMPLETE ONLY WHEN THE SYSTEM WORKS AS ONE CONNECTED COMPETENCY-DRIVEN PLATFORM, NOT WHEN EVERY PAGE EXISTS.

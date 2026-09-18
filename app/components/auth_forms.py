@@ -75,18 +75,7 @@ def _demo_row(account: DemoAccount, **props) -> rx.Component:
                 account["email"],
                 class_name="mt-1 font-mono text-xs font-medium text-slate-200",
             ),
-            rx.el.p(
-                account["password"],
-                class_name="font-mono text-xs font-medium text-slate-200",
-            ),
             class_name="min-w-0",
-        ),
-        rx.el.button(
-            "Use",
-            on_click=lambda: AuthState.use_demo_account(
-                account["email"], account["password"]
-            ),
-            class_name="h-fit w-fit shrink-0 rounded-md border border-teal-400/50 px-3 py-1 text-xs font-semibold text-teal-200 transition-colors hover:bg-teal-400/10",
         ),
         class_name="flex items-start justify-between gap-3 rounded-lg border border-white/10 bg-white/[0.04] p-3",
         **props,
@@ -98,14 +87,13 @@ def demo_credentials_panel() -> rx.Component:
         rx.el.div(
             rx.icon("key-round", class_name="h-4 w-4 text-amber-300"),
             rx.el.h3(
-                "Demo credentials",
+                "Demo access",
                 class_name="text-sm font-semibold uppercase tracking-[0.16em] text-white",
             ),
             class_name="flex items-center gap-2",
         ),
         rx.el.p(
-            "This development environment ships one seeded account per role. "
-            "Select one to fill the sign-in form.",
+            "Demo credentials are deployment-managed. Contact your administrator for access.",
             class_name="mt-2 text-xs font-medium leading-relaxed text-slate-400",
         ),
         rx.el.div(

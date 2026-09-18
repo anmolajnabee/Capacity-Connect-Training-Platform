@@ -13,6 +13,7 @@ from __future__ import annotations
 import reflex as rx
 import datetime as dt
 import enum
+import secrets
 
 from sqlalchemy import (
     Boolean,
@@ -586,6 +587,9 @@ class LearningResource(Base, TimestampMixin):
     __tablename__ = "cc_learning_resource"
     __table_args__ = (
         Index("ix_cc_resource_course_order", "course_id", "sort_order"),
+        CheckConstraint(
+            "file_size_bytes >= 0", name="ck_cc_resource_file_size_bytes"
+        ),
     )
 
     id: Mapped[int] = mapped_column(primary_key=True, init=False)
@@ -602,6 +606,15 @@ class LearningResource(Base, TimestampMixin):
     )
     module_name: Mapped[str] = mapped_column(String(160), default="")
     file_name: Mapped[str] = mapped_column(String(300), default="")
+    file_size_bytes: Mapped[int] = mapped_column(
+        Integer, default=0, server_default="0"
+    )
+    content_type: Mapped[str] = mapped_column(
+        String(255), default="", server_default=""
+    )
+    sha256_digest: Mapped[str] = mapped_column(
+        String(64), default="", server_default=""
+    )
     external_url: Mapped[str] = mapped_column(String(500), default="")
     duration_minutes: Mapped[int] = mapped_column(Integer, default=0)
     sort_order: Mapped[int] = mapped_column(Integer, default=0)
@@ -687,6 +700,22 @@ class Assessment(Base, TimestampMixin):
     __tablename__ = "cc_assessment"
     __table_args__ = (
         Index("ix_cc_assessment_course_status", "course_id", "status"),
+        CheckConstraint(
+            "time_limit_minutes BETWEEN 1 AND 300",
+            name="ck_cc_assessment_time_limit",
+        ),
+        CheckConstraint(
+            "max_attempts BETWEEN 1 AND 10",
+            name="ck_cc_assessment_max_attempts",
+        ),
+        CheckConstraint(
+            "total_marks >= 0 AND passing_marks >= 0",
+            name="ck_cc_assessment_nonnegative_marks",
+        ),
+        CheckConstraint(
+            "total_marks = 0 OR passing_marks <= total_marks",
+            name="ck_cc_assessment_passing_marks",
+        ),
     )
 
     id: Mapped[int] = mapped_column(primary_key=True, init=False)
@@ -737,6 +766,11 @@ class Question(Base, TimestampMixin):
     skill_id: Mapped[int | None] = mapped_column(
         ForeignKey("cc_skill.id", ondelete="SET NULL"), default=None
     )
+    competency_id: Mapped[int | None] = mapped_column(
+        ForeignKey("cc_competency.id", ondelete="RESTRICT"),
+        default=None,
+        index=True,
+    )
     prompt: Mapped[str] = mapped_column(Text, default="")
     explanation: Mapped[str] = mapped_column(Text, default="")
     marks: Mapped[float] = mapped_column(Float, default=1.0)
@@ -781,6 +815,10 @@ class AssessmentAttempt(Base, TimestampMixin):
             name="uq_cc_attempt_number",
         ),
         Index("ix_cc_attempt_trainee_status", "trainee_id", "status"),
+        CheckConstraint("attempt_number >= 1", name="ck_cc_attempt_number"),
+        CheckConstraint(
+            "time_taken_seconds >= 0", name="ck_cc_attempt_time_taken"
+        ),
     )
 
     id: Mapped[int] = mapped_column(primary_key=True, init=False)
@@ -799,6 +837,13 @@ class AssessmentAttempt(Base, TimestampMixin):
     )
     submitted_at: Mapped[dt.datetime | None] = mapped_column(
         DateTime(timezone=True), default=None
+    )
+    expires_at: Mapped[dt.datetime] = mapped_column(
+        DateTime(timezone=True),
+        nullable=False,
+        default=dt.datetime(1970, 1, 1, tzinfo=dt.UTC),
+        server_default="1970-01-01 00:00:00+00:00",
+        comment="Authoritative server expiry snapshot set at attempt start. Legacy or omitted values fail closed as already expired.",
     )
     time_taken_seconds: Mapped[int] = mapped_column(Integer, default=0)
 
@@ -893,6 +938,9 @@ class Certificate(Base, TimestampMixin):
     __table_args__ = (
         UniqueConstraint("certificate_number", name="uq_cc_certificate_number"),
         UniqueConstraint(
+            "verification_code", name="uq_cc_certificate_verification_code"
+        ),
+        UniqueConstraint(
             "course_id", "trainee_id", name="uq_cc_certificate_course_trainee"
         ),
     )
@@ -914,7 +962,10 @@ class Certificate(Base, TimestampMixin):
     final_score: Mapped[float] = mapped_column(Float, default=0.0)
     grade: Mapped[str] = mapped_column(String(8), default="")
     verification_code: Mapped[str] = mapped_column(
-        String(64), default="", index=True
+        String(64),
+        default_factory=lambda: secrets.token_hex(32),
+        index=True,
+        comment="Opaque random public verification token, never a certificate serial. Existing duplicate tokens require remediation before uniqueness is applied.",
     )
     is_revoked: Mapped[bool] = mapped_column(Boolean, default=False)
     file_name: Mapped[str] = mapped_column(String(300), default="")

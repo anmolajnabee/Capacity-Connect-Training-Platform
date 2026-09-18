@@ -5,6 +5,8 @@ from __future__ import annotations
 import datetime as dt
 import json
 import logging
+import os
+import secrets
 
 import reflex as rx
 from sqlalchemy import select
@@ -54,24 +56,22 @@ from app.security import hash_password
 
 logger = logging.getLogger(__name__)
 
-DEMO_PASSWORD = "Capacity@2024"
+DEMO_PASSWORD = os.environ.get("CAPACITY_CONNECT_DEMO_PASSWORD", "")
+
 DEMO_ACCOUNTS: list[dict[str, str]] = [
     {
         "role": "Trainee",
         "email": "trainee@capacityconnect.gov",
-        "password": DEMO_PASSWORD,
         "note": "Enrolled learner with results and a certificate",
     },
     {
         "role": "Trainer",
         "email": "trainer@capacityconnect.gov",
-        "password": DEMO_PASSWORD,
         "note": "Lead trainer with courses, resources and assessments",
     },
     {
         "role": "Admin",
         "email": "admin@capacityconnect.gov",
-        "password": DEMO_PASSWORD,
         "note": "Control centre: approvals, competency mapping, notices",
     },
 ]
@@ -80,7 +80,7 @@ _seed_done = False
 _assignment_seed_done = False
 _certificate_request_seed_done = False
 _normalized_seed_done = False
-_NORMALIZED_SEED_SENTINEL = "capacity-connect-normalized-seed-complete-v1"
+_NORMALIZED_SEED_SENTINEL = "capacity-connect-normalized-seed-complete-v2"
 
 
 def _make_user(
@@ -92,7 +92,12 @@ def _make_user(
     phone: str = "",
     seed: str = "",
 ) -> User:
-    password_hash, salt = hash_password(DEMO_PASSWORD)
+    password = DEMO_PASSWORD
+    if not password.strip():
+        raise ValueError(
+            "Demo account creation requires an explicitly configured password."
+        )
+    password_hash, salt = hash_password(password)
     return User(
         email=email,
         full_name=full_name,
@@ -117,7 +122,13 @@ def ensure_seed_data() -> None:
                 existing = session.scalar(
                     select(User).where(User.email == DEMO_ACCOUNTS[2]["email"])
                 )
-                if existing is None:
+                if (
+                    existing is None
+                    and os.environ.get(
+                        "CAPACITY_CONNECT_DEMO_PASSWORD", ""
+                    ).strip()
+                    and session.scalar(select(User.id).limit(1)) is None
+                ):
                     _seed_everything(session)
                     session.commit()
                     logger.info("CAPACITY CONNECT demo data seeded.")
@@ -162,6 +173,16 @@ def ensure_normalized_seed_data() -> None:
             # A competing worker may have completed while this transaction waited.
             if session.scalar(completion) is not None:
                 _normalized_seed_done = True
+                return
+
+            if (
+                session.scalar(
+                    select(m.User.id).where(
+                        m.User.email == "admin@capacityconnect.gov"
+                    )
+                )
+                is None
+            ):
                 return
 
             def ensure(model, keys, **values):
@@ -639,6 +660,7 @@ def ensure_normalized_seed_data() -> None:
                     {"question_id": question.id, "position": 2},
                     text=incorrect,
                 )
+            _repair_sih_demo(session)
             notice = ensure(
                 m.Notification,
                 {
@@ -718,6 +740,371 @@ def ensure_normalized_seed_data() -> None:
             f"Error: {type(e).__name__}",
             exc_info=(RuntimeError, safe_error, e.__traceback__),
         )
+
+
+def _repair_sih_demo(session) -> None:
+    """Deterministic, provenance-labelled SIH fixture; never reset passwords."""
+    from app import models as m
+    from app.services.evidence import refresh_evidence
+    from app.services.learning_paths import generate_path
+    from app.services.effectiveness import refresh_effectiveness
+    from app.services.trainer_fit import evaluate
+    from app.services.team_coverage import propose_team
+
+    def ensure(model, keys, **values):
+        row = session.scalar(select(model).filter_by(**keys).limit(1))
+        if row is None:
+            row = model(**keys, **values)
+            session.add(row)
+            session.flush()
+        return row
+
+    identities = {
+        "admin@capacityconnect.gov": "System Administrator",
+        "trainer@capacityconnect.gov": "Dr. Raj Sharma",
+        "trainee@capacityconnect.gov": "Anmol Kumar",
+    }
+    users = {
+        u.email: u
+        for u in session.scalars(
+            select(m.User).where(m.User.email.in_(identities))
+        )
+    }
+    if len(users) != 3:
+        return
+    for email, name in identities.items():
+        users[email].full_name = name
+    admin = users["admin@capacityconnect.gov"]
+    trainer = users["trainer@capacityconnect.gov"]
+    trainee = users["trainee@capacityconnect.gov"]
+    profile = ensure(m.TraineeProfile, {"user_id": trainee.id})
+    profile.designation = "Weather Forecaster"
+    subject = ensure(m.Subject, {"code": "RADAR"}, name="Doppler Radar")
+    comps = []
+    for code, name in (
+        ("FUNDAMENTALS", "Radar Fundamentals"),
+        ("VELOCITY", "Velocity Interpretation"),
+        ("DATA", "Data Interpretation"),
+    ):
+        comps.append(
+            ensure(
+                m.Competency,
+                {"code": f"RADAR-{code}"},
+                subject_id=subject.id,
+                name=name,
+                description="Doppler Radar competency; measured evidence on the five-level SIH scale.",
+            )
+        )
+    membership = session.scalar(
+        select(m.UserOrganizationAssignment)
+        .where(
+            m.UserOrganizationAssignment.user_id == trainee.id,
+            m.UserOrganizationAssignment.status == "active",
+        )
+        .order_by(m.UserOrganizationAssignment.id)
+        .limit(1)
+    )
+    if membership:
+        role = session.get(m.OrganizationalRole, membership.role_id)
+        role.title = "Weather Forecaster"
+        for comp in comps:
+            requirement = ensure(
+                m.RoleCompetencyRequirement,
+                {"role_id": role.id, "competency_id": comp.id},
+                required_level=4,
+            )
+            requirement.required_level = 4
+    course = session.scalar(
+        select(m.Course).where(m.Course.code == "CC-NOW-204")
+    )
+    baseline = dt.datetime(2025, 1, 1, tzinfo=dt.UTC)
+    for comp, level in zip(comps, (4, 2, 2)):
+        evidence = ensure(
+            m.CompetencyEvidence,
+            {
+                "user_id": trainee.id,
+                "competency_id": comp.id,
+                "evidence_type": "trainer_evaluation",
+                "source_system": "sih_demo_fixture_v2",
+                "source_reference": f"baseline:{trainee.id}:{comp.code}",
+            },
+            measured_level=level,
+            verifier_id=admin.id,
+            verification_status="verified",
+            observed_at=baseline,
+            verified_at=baseline,
+            notes="Deterministic SIH demonstration baseline, verified by the seeded administrator; not a production assessment claim.",
+        )
+        if course:
+            ensure(
+                m.CompetencyObservation,
+                {
+                    "course_id": course.id,
+                    "user_id": trainee.id,
+                    "competency_id": comp.id,
+                    "phase": "pre",
+                    "observed_at": baseline,
+                },
+                observer_id=admin.id,
+                evidence_id=evidence.id,
+                observed_level=level,
+                verification_status="verified",
+                verified_at=baseline,
+                notes="SIH demonstration baseline linked to verified fixture evidence.",
+            )
+    if course is None:
+        refresh_evidence(session, trainee.id)
+        return
+    for comp in comps:
+        for kind in ("outcome", "trainer"):
+            ensure(
+                m.CourseCompetencyRequirement,
+                {
+                    "course_id": course.id,
+                    "competency_id": comp.id,
+                    "requirement_type": kind,
+                },
+                required_level=4,
+                weight=5.0,
+            )
+    requirements = session.scalars(
+        select(m.CourseCompetencyRequirement).where(
+            m.CourseCompetencyRequirement.course_id == course.id,
+            m.CourseCompetencyRequirement.requirement_type == "trainer",
+        )
+    ).all()
+    for requirement in requirements:
+        ensure(
+            m.CompetencyEvidence,
+            {
+                "user_id": trainer.id,
+                "competency_id": requirement.competency_id,
+                "evidence_type": "trainer_evaluation",
+                "source_system": "sih_demo_fixture_v2",
+                "source_reference": f"faculty:{trainer.id}:{requirement.competency_id}",
+            },
+            measured_level=5,
+            verifier_id=admin.id,
+            verification_status="verified",
+            observed_at=baseline,
+            verified_at=baseline,
+            notes="SIH demonstration faculty verification: Radar/Doppler and mapped Nowcasting expertise. Fixture only.",
+        )
+    faculty = ensure(m.TrainerProfile, {"user_id": trainer.id})
+    faculty.specialization = (
+        "Doppler Radar, Radar Meteorology, Weather Data Analysis"
+    )
+    faculty.is_available = True
+    faculty.years_of_training = max(faculty.years_of_training, 10)
+    qualification = session.scalar(
+        select(m.Qualification)
+        .where(m.Qualification.user_id == trainer.id)
+        .order_by(m.Qualification.id)
+        .limit(1)
+    )
+    if qualification is None:
+        qualification = ensure(
+            m.Qualification,
+            {"user_id": trainer.id, "degree": "PhD in Atmospheric Sciences"},
+            field_of_study="Radar Meteorology",
+            institution="SIH demonstration faculty record",
+        )
+    qualification.is_verified = True
+    experience = session.scalar(
+        select(m.WorkExperience)
+        .where(m.WorkExperience.user_id == trainer.id)
+        .order_by(m.WorkExperience.id)
+        .limit(1)
+    )
+    if experience is None:
+        experience = ensure(
+            m.WorkExperience,
+            {"user_id": trainer.id, "role_title": "Radar training faculty"},
+            organization="India Meteorological Department",
+            start_date=dt.date(2015, 1, 1),
+            is_current=True,
+            responsibilities="SIH fixture: radar interpretation and operational forecasting instruction.",
+        )
+    epoch = dt.datetime(2024, 1, 1, tzinfo=dt.UTC)
+    end_epoch = dt.datetime(2030, 1, 1, tzinfo=dt.UTC)
+    availability = ensure(
+        m.TrainerAvailability,
+        {"trainer_id": trainer.id, "starts_at": epoch, "ends_at": end_epoch},
+    )
+    availability.status = "available"
+    availability.notes = "Confirmed availability for the deterministic SIH demonstration dataset."
+    capacity = ensure(
+        m.TrainerCapacity,
+        {"trainer_id": trainer.id, "starts_at": epoch, "ends_at": end_epoch},
+    )
+    capacity.max_hours = max(120.0, capacity.allocated_hours)
+    capacity.max_courses = max(4, capacity.allocated_courses)
+    capacity.max_participants = max(150, capacity.allocated_participants)
+    assessments = session.scalars(
+        select(m.Assessment).where(m.Assessment.course_id == course.id)
+    ).all()
+    for assessment in assessments:
+        for question in session.scalars(
+            select(m.Question).where(m.Question.assessment_id == assessment.id)
+        ):
+            if question.competency_id is None:
+                prompt = question.prompt.lower()
+                question.competency_id = (
+                    comps[1].id
+                    if any(
+                        word in prompt
+                        for word in ("velocity", "radial", "doppler")
+                    )
+                    else comps[0].id
+                    if "radar" in prompt
+                    else comps[2].id
+                )
+    official = ensure(
+        m.Assessment,
+        {
+            "course_id": course.id,
+            "title": "Doppler Radar competency assessment — SIH",
+        },
+        created_by_id=trainer.id,
+        instructions="Choose one answer per question. Official server-scored competency assessment.",
+        status="draft",
+        total_marks=3,
+        passing_marks=2,
+        time_limit_minutes=15,
+        max_attempts=3,
+        opens_at=epoch,
+        deadline_at=end_epoch,
+        shuffle_questions=True,
+    )
+    specs = [
+        (
+            comps[0],
+            "What does weather radar reflectivity primarily describe?",
+            "Returned signal from atmospheric scatterers",
+            "Surface pressure",
+            "Wind direction at every height",
+            "Station temperature",
+            "Reflectivity describes backscattered energy, not a direct pressure or temperature measurement.",
+        ),
+        (
+            comps[1],
+            "What does Doppler radial velocity measure?",
+            "Motion toward or away from the radar along its beam",
+            "The full three-dimensional wind vector",
+            "Rainfall accumulation",
+            "Cloud temperature",
+            "Radial velocity is the component along the radar beam.",
+        ),
+        (
+            comps[2],
+            "Before interpreting a radar dataset, which checks are necessary?",
+            "Calibration, clutter and beam blockage checks",
+            "Only the colour palette",
+            "Only the file name",
+            "No checks for digital data",
+            "Quality checks are necessary before interpreting radar observations.",
+        ),
+    ]
+    for position, (comp, prompt, correct, b, c, d, explanation) in enumerate(
+        specs, 1
+    ):
+        question = ensure(
+            m.Question,
+            {"assessment_id": official.id, "sort_order": position},
+            competency_id=comp.id,
+            prompt=prompt,
+            explanation=explanation,
+            marks=1,
+        )
+        for index, value in enumerate((correct, b, c, d), 1):
+            ensure(
+                m.QuestionOption,
+                {"question_id": question.id, "sort_order": index},
+                label=chr(64 + index),
+                text=value,
+                is_correct=index == 1,
+            )
+    official.status = "open"
+    session.flush()
+    refresh_evidence(session, trainer.id)
+    refresh_evidence(session, trainee.id)
+    path = generate_path(session, trainee.id, comps[1].id)
+    steps = session.scalars(
+        select(m.LearningPathStep).where(m.LearningPathStep.path_id == path.id)
+    ).all()
+    if len(steps) == 1 and steps[0].course_id == course.id:
+        position = 2
+
+        def step(kind, **target):
+            nonlocal position
+            session.add(
+                m.LearningPathStep(
+                    path_id=path.id,
+                    user_id=trainee.id,
+                    gap_id=steps[0].gap_id,
+                    position=position,
+                    step_type=kind,
+                    **target,
+                )
+            )
+            position += 1
+
+        for module in session.scalars(
+            select(m.CourseModule)
+            .where(
+                m.CourseModule.course_id == course.id,
+                m.CourseModule.status == "published",
+            )
+            .order_by(m.CourseModule.position)
+        ):
+            step("module", module_id=module.id)
+            for lesson in session.scalars(
+                select(m.Lesson)
+                .where(
+                    m.Lesson.module_id == module.id,
+                    m.Lesson.status == "published",
+                )
+                .order_by(m.Lesson.position)
+            ):
+                step("lesson", lesson_id=lesson.id)
+        for resource in session.scalars(
+            select(m.LearningResource)
+            .where(
+                m.LearningResource.course_id == course.id,
+                m.LearningResource.is_published.is_(True),
+            )
+            .order_by(m.LearningResource.sort_order)
+        ):
+            step("resource", resource_id=resource.id)
+        practice = session.scalar(
+            select(m.PracticeQuestion)
+            .where(
+                m.PracticeQuestion.competency_id == comps[1].id,
+                m.PracticeQuestion.status == "published",
+            )
+            .limit(1)
+        )
+        if practice:
+            step("practice", practice_question_id=practice.id)
+        step("assessment", assessment_id=official.id)
+    refresh_effectiveness(session, course.id)
+    start = dt.datetime.combine(
+        course.start_date or dt.date.today(), dt.time.min, tzinfo=dt.UTC
+    )
+    end = dt.datetime.combine(
+        course.end_date or (start.date() + dt.timedelta(days=30)),
+        dt.time.max,
+        tzinfo=dt.UTC,
+    )
+    end = max(end, start + dt.timedelta(days=1))
+    evaluations = [evaluate(session, course, trainer, start, end, True)]
+    propose_team(session, course.id, evaluations)
+    for cert in session.scalars(
+        select(m.Certificate).where(m.Certificate.trainee_id == trainee.id)
+    ):
+        if len(cert.verification_code) < 32:
+            cert.verification_code = secrets.token_hex(32)
+    session.flush()
 
 
 def ensure_assignment_seed_data() -> None:
@@ -1975,7 +2362,7 @@ def _seed_everything(session) -> None:
             issued_at=now - dt.timedelta(days=4),
             final_score=66.7,
             grade="B",
-            verification_code="VRF-8H2K-31QA",
+            verification_code=secrets.token_hex(32),
         )
     )
 

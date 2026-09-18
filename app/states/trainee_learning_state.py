@@ -148,12 +148,9 @@ class TraineeLearningState(rx.State):
     rating_options: list[int] = [1, 2, 3, 4, 5]
 
     async def _uid(self) -> int:
-        from app.states.auth_state import AuthState
+        from app.security import validate_role
 
-        auth = await self.get_state(AuthState)
-        if auth.role != "trainee":
-            return 0
-        return auth.user_id
+        return await validate_role(self, "trainee")
 
     # ------------------------------------------------------------ computed
     @rx.var
@@ -661,7 +658,7 @@ class TraineeLearningState(rx.State):
             trainee_id=uid,
             final_score=final_score,
             grade=grade_for(final_score) if final_score else "P",
-            verification_code=secrets.token_hex(5).upper(),
+            verification_code=secrets.token_hex(32),
         )
         session.add(certificate)
         await session.flush()

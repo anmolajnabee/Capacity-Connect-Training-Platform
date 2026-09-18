@@ -247,7 +247,8 @@ class TrainerAssignmentWorkflowState(rx.State):
             (
                 await session.scalars(
                     select(CourseTrainerAssignment.course_id).where(
-                        CourseTrainerAssignment.trainer_id == trainer_id
+                        CourseTrainerAssignment.trainer_id == trainer_id,
+                        CourseTrainerAssignment.status == "approved",
                     )
                 )
             ).all()

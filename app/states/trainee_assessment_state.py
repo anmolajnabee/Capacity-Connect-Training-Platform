@@ -5,6 +5,7 @@ from __future__ import annotations
 import asyncio
 import datetime as dt
 import logging
+import secrets
 from typing import TypedDict
 
 import reflex as rx
@@ -136,12 +137,14 @@ class TraineeAssessmentState(rx.State):
     summary_passed: bool = False
 
     async def _uid(self) -> int:
-        from app.states.auth_state import AuthState
+        from app.security import validate_role
 
-        auth = await self.get_state(AuthState)
-        if auth.role != "trainee":
-            return 0
-        return auth.user_id
+        return await validate_role(self, "trainee")
+
+    def _utc_datetime(self, value: dt.datetime) -> dt.datetime:
+        if value.tzinfo is None:
+            return value.replace(tzinfo=dt.UTC)
+        return value.astimezone(dt.UTC)
 
     # ------------------------------------------------------------ computed
     @rx.var
@@ -229,6 +232,7 @@ class TraineeAssessmentState(rx.State):
                 .join(Enrollment, Enrollment.course_id == Course.id)
                 .where(
                     Enrollment.trainee_id == uid,
+                    Enrollment.status != "dropped",
                     Assessment.status != AssessmentStatus.DRAFT.value,
                 )
                 .order_by(
@@ -275,11 +279,14 @@ class TraineeAssessmentState(rx.State):
                 reason = "This questionnaire is closed."
             elif question_count == 0:
                 reason = "No questions have been published yet."
-            elif assessment.opens_at is not None and assessment.opens_at > now:
+            elif (
+                assessment.opens_at is not None
+                and self._utc_datetime(assessment.opens_at) > now
+            ):
                 reason = f"Opens {assessment.opens_at.strftime('%d %b %Y, %H:%M UTC')}"
             elif (
                 assessment.deadline_at is not None
-                and assessment.deadline_at < now
+                and self._utc_datetime(assessment.deadline_at) < now
             ):
                 reason = f"Deadline passed on {assessment.deadline_at.strftime('%d %b %Y')}"
             elif attempts_used >= assessment.max_attempts:
@@ -325,7 +332,15 @@ class TraineeAssessmentState(rx.State):
                     Assessment.id == AssessmentResult.assessment_id,
                 )
                 .join(Course, Course.id == Assessment.course_id)
-                .where(AssessmentResult.trainee_id == uid)
+                .join(
+                    Enrollment,
+                    (Enrollment.course_id == Course.id)
+                    & (Enrollment.trainee_id == uid),
+                )
+                .where(
+                    AssessmentResult.trainee_id == uid,
+                    Enrollment.status != "dropped",
+                )
                 .order_by(AssessmentResult.id.desc())
             )
         ).all()
@@ -362,7 +377,15 @@ class TraineeAssessmentState(rx.State):
             await session.execute(
                 select(Certificate, Course)
                 .join(Course, Course.id == Certificate.course_id)
-                .where(Certificate.trainee_id == uid)
+                .join(
+                    Enrollment,
+                    (Enrollment.course_id == Course.id)
+                    & (Enrollment.trainee_id == uid),
+                )
+                .where(
+                    Certificate.trainee_id == uid,
+                    Enrollment.status != "dropped",
+                )
                 .order_by(Certificate.issued_at.desc())
             )
         ).all()
@@ -474,7 +497,23 @@ class TraineeAssessmentState(rx.State):
         now = dt.datetime.now(dt.UTC)
         try:
             async with rx.asession() as session:
-                assessment = await session.get(Assessment, assessment_id)
+                actor = await session.scalar(
+                    select(User).where(User.id == uid).with_for_update()
+                )
+                if (
+                    actor is None
+                    or not actor.is_active
+                    or actor.role != "trainee"
+                    or actor.approval_status != "approved"
+                ):
+                    self.error_message = "Approved trainee access is required."
+                    return
+                now = dt.datetime.now(dt.UTC)
+                assessment = await session.scalar(
+                    select(Assessment)
+                    .where(Assessment.id == assessment_id)
+                    .with_for_update()
+                )
                 if assessment is None:
                     self.error_message = "That assessment no longer exists."
                     return
@@ -482,6 +521,7 @@ class TraineeAssessmentState(rx.State):
                     select(func.count(Enrollment.id)).where(
                         Enrollment.course_id == assessment.course_id,
                         Enrollment.trainee_id == uid,
+                        Enrollment.status != "dropped",
                     )
                 )
                 if not enrolled:
@@ -494,7 +534,7 @@ class TraineeAssessmentState(rx.State):
                     return
                 if (
                     assessment.opens_at is not None
-                    and assessment.opens_at > now
+                    and self._utc_datetime(assessment.opens_at) > now
                 ):
                     self.error_message = (
                         "This questionnaire has not opened yet."
@@ -502,12 +542,28 @@ class TraineeAssessmentState(rx.State):
                     return
                 if (
                     assessment.deadline_at is not None
-                    and assessment.deadline_at < now
+                    and self._utc_datetime(assessment.deadline_at) < now
                 ):
                     self.error_message = (
                         "The deadline for this questionnaire has passed."
                     )
                     return
+                in_progress = await session.scalar(
+                    select(AssessmentAttempt)
+                    .where(
+                        AssessmentAttempt.assessment_id == assessment_id,
+                        AssessmentAttempt.trainee_id == uid,
+                        AssessmentAttempt.status == "in_progress",
+                    )
+                    .with_for_update()
+                )
+                if in_progress is not None:
+                    if self._utc_datetime(in_progress.expires_at) < now:
+                        in_progress.status = "expired"
+                        await session.flush()
+                    else:
+                        self.error_message = "An attempt for this assessment is already in progress."
+                        return
                 attempts_used = int(
                     await session.scalar(
                         select(func.count(AssessmentAttempt.id)).where(
@@ -532,12 +588,23 @@ class TraineeAssessmentState(rx.State):
                         "No questions have been published for this assessment."
                     )
                     return
+                expires = self._utc_datetime(
+                    now + dt.timedelta(minutes=assessment.time_limit_minutes)
+                )
+                if assessment.deadline_at is not None:
+                    expires = min(
+                        expires, self._utc_datetime(assessment.deadline_at)
+                    )
+                if assessment.shuffle_questions:
+                    questions = list(questions)
+                    secrets.SystemRandom().shuffle(questions)
                 attempt = AssessmentAttempt(
                     assessment_id=assessment_id,
                     trainee_id=uid,
                     attempt_number=attempts_used + 1,
                     status=AttemptStatus.IN_PROGRESS.value,
                     started_at=now,
+                    expires_at=expires,
                 )
                 session.add(attempt)
                 await session.commit()
@@ -581,7 +648,7 @@ class TraineeAssessmentState(rx.State):
                 self.answers = {}
                 self.current_index = 0
                 self.seconds_remaining = max(
-                    60, int(assessment.time_limit_minutes) * 60
+                    0, int((expires - dt.datetime.now(dt.UTC)).total_seconds())
                 )
                 self.attempt_active = True
         except Exception as exception:
@@ -638,10 +705,12 @@ class TraineeAssessmentState(rx.State):
         try:
             async with rx.asession() as session:
                 attempt = await session.scalar(
-                    select(AssessmentAttempt).where(
+                    select(AssessmentAttempt)
+                    .where(
                         AssessmentAttempt.id == attempt_id,
                         AssessmentAttempt.trainee_id == uid,
                     )
+                    .with_for_update()
                 )
                 if attempt is not None and attempt.status == (
                     AttemptStatus.IN_PROGRESS.value
@@ -669,27 +738,59 @@ class TraineeAssessmentState(rx.State):
         try:
             async with rx.asession() as session:
                 attempt = await session.scalar(
-                    select(AssessmentAttempt).where(
+                    select(AssessmentAttempt)
+                    .where(
                         AssessmentAttempt.id == attempt_id,
                         AssessmentAttempt.trainee_id == uid,
                     )
+                    .with_for_update()
                 )
                 if attempt is None:
                     self.is_submitting = False
                     self.error_message = "That attempt could not be found."
                     return
-                if attempt.status in (
-                    AttemptStatus.SUBMITTED.value,
-                    AttemptStatus.GRADED.value,
-                ):
+                if attempt.status != AttemptStatus.IN_PROGRESS.value:
                     self.is_submitting = False
                     self.error_message = (
                         "This attempt has already been submitted."
                     )
                     return
-                assessment = await session.get(
-                    Assessment, attempt.assessment_id
+                assessment = await session.scalar(
+                    select(Assessment)
+                    .where(Assessment.id == attempt.assessment_id)
+                    .with_for_update()
                 )
+                now = dt.datetime.now(dt.UTC)
+                enrolled = (
+                    await session.scalar(
+                        select(Enrollment.id).where(
+                            Enrollment.course_id == assessment.course_id,
+                            Enrollment.trainee_id == uid,
+                            Enrollment.status != "dropped",
+                        )
+                    )
+                    if assessment is not None
+                    else None
+                )
+                if (
+                    assessment is None
+                    or not enrolled
+                    or assessment.status != "open"
+                    or now > self._utc_datetime(attempt.expires_at)
+                    or (
+                        assessment.deadline_at is not None
+                        and now > self._utc_datetime(assessment.deadline_at)
+                    )
+                    or (
+                        assessment.opens_at is not None
+                        and now < self._utc_datetime(assessment.opens_at)
+                    )
+                ):
+                    attempt.status = "expired"
+                    await session.commit()
+                    self._reset_attempt()
+                    self.error_message = "Attempt expired or assessment unavailable. No score or evidence was recorded."
+                    return
                 questions = (
                     await session.scalars(
                         select(Question)
@@ -746,11 +847,7 @@ class TraineeAssessmentState(rx.State):
                 if started.tzinfo is None:
                     started = started.replace(tzinfo=dt.UTC)
                 elapsed = int(max((now - started).total_seconds(), 0))
-                denominator = (
-                    float(assessment.total_marks)
-                    if assessment is not None and assessment.total_marks > 0
-                    else total_marks
-                )
+                denominator = total_marks
                 percentage = (
                     round(score / denominator * 100, 1)
                     if denominator > 0
@@ -787,6 +884,10 @@ class TraineeAssessmentState(rx.State):
                 )
                 session.add(result)
                 await session.flush()
+                if is_passed:
+                    from app.services.evidence import record_official_evidence
+
+                    await session.run_sync(record_official_evidence, result.id)
                 await enqueue(session, "assessment_result", result)
                 await session.commit()
                 self.summary = {

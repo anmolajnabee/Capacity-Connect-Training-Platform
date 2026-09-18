@@ -75,20 +75,16 @@ class DashboardCourse(TypedDict):
 
 async def trainer_guard(state: rx.State) -> int:
     """Return the authenticated approved trainer id, or 0."""
-    auth = await state.get_state(AuthState)
-    if (
-        auth.user_id > 0
-        and auth.role == UserRole.TRAINER.value
-        and auth.approval_status == ApprovalStatus.APPROVED.value
-    ):
-        return auth.user_id
-    return 0
+    from app.security import validate_role
+
+    return await validate_role(state, "trainer")
 
 
 async def trainer_course_ids(session, trainer_id: int) -> list[int]:
     rows = await session.scalars(
         select(CourseTrainerAssignment.course_id).where(
-            CourseTrainerAssignment.trainer_id == trainer_id
+            CourseTrainerAssignment.trainer_id == trainer_id,
+            CourseTrainerAssignment.status == "approved",
         )
     )
     return list(rows.all())
@@ -277,7 +273,10 @@ class TrainerState(rx.State):
                             Course,
                             Course.id == CourseTrainerAssignment.course_id,
                         )
-                        .where(CourseTrainerAssignment.trainer_id == trainer_id)
+                        .where(
+                            CourseTrainerAssignment.trainer_id == trainer_id,
+                            CourseTrainerAssignment.status == "approved",
+                        )
                         .order_by(Course.start_date.desc().nullslast())
                     )
                 ).all()

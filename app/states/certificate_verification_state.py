@@ -11,6 +11,7 @@ class CertificateVerificationState(rx.State):
     loading: bool = False
     error: str = ""
     number: str = ""
+    _verification_token: str = ""
     trainee: str = ""
     training: str = ""
     issuer: str = ""
@@ -28,6 +29,13 @@ class CertificateVerificationState(rx.State):
         self.qr = ""
         self.competencies = []
         self.number = ""
+        self._verification_token = ""
+        self.trainee = ""
+        self.training = ""
+        self.issuer = ""
+        self.issued = ""
+        self.revoked = False
+        self.verification_url = ""
         try:
             number = getattr(self, "certificate_id", "")
             if number is None or number == "":
@@ -51,7 +59,7 @@ class CertificateVerificationState(rx.State):
                     await session.execute(
                         text("""SELECT cert.id,cert.certificate_number,u.full_name,c.title,COALESCE(issuer.full_name,'Issuer not recorded'),cert.issued_at,cert.is_revoked
                     FROM cc_certificate cert JOIN cc_user u ON u.id=cert.trainee_id JOIN cc_course c ON c.id=cert.course_id
-                    LEFT JOIN cc_user issuer ON issuer.id=cert.issued_by_id WHERE cert.certificate_number=:number LIMIT 1"""),
+                    LEFT JOIN cc_user issuer ON issuer.id=cert.issued_by_id WHERE cert.verification_code=:number LIMIT 1"""),
                         {"number": number},
                     )
                 ).first()
@@ -66,6 +74,7 @@ class CertificateVerificationState(rx.State):
                             {"id": row[0]},
                         )
                     ).all()
+                    self._verification_token = number
                     self.number = str(row[1])
                     self.trainee = str(row[2])
                     self.training = str(row[3])
@@ -98,7 +107,9 @@ class CertificateVerificationState(rx.State):
         if not self.found or not self.number:
             return
         try:
-            self.verification_url, self.qr = certificate_qr(origin, self.number)
+            self.verification_url, self.qr = certificate_qr(
+                origin, self._verification_token
+            )
         except Exception as e:
             logging.exception(f"Error: {type(e).__name__}")
             self.error = (

@@ -257,7 +257,7 @@ def _certificate_card(item: CertificateItem) -> rx.Component:
         rx.el.a(
             rx.icon("qr-code", class_name="h-4 w-4"),
             "Verify certificate & QR",
-            href=f"/verify/{item['certificate_number']}",
+            href=f"/verify/{item['verification_code']}",
             class_name="cc-focus mt-4 flex w-fit items-center gap-2 rounded-lg border border-teal-300 bg-teal-50 px-3 py-2 text-sm font-semibold text-teal-800 hover:bg-teal-100",
         ),
         class_name="flex h-full w-full min-w-0 flex-col rounded-xl border border-slate-200 bg-white p-4",

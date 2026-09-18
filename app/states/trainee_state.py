@@ -216,12 +216,9 @@ class TraineeState(rx.State):
 
     # --------------------------------------------------------------- helpers
     async def _uid(self) -> int:
-        from app.states.auth_state import AuthState
+        from app.security import validate_role
 
-        auth = await self.get_state(AuthState)
-        if auth.role != "trainee":
-            return 0
-        return auth.user_id
+        return await validate_role(self, "trainee")
 
     @rx.var
     def has_skills(self) -> bool:

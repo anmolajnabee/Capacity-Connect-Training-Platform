@@ -28,7 +28,7 @@ from app.security import (
     sign_session,
     verify_password,
 )
-from app.seed import DEMO_ACCOUNTS, DEMO_PASSWORD, ensure_seed_data
+from app.seed import DEMO_ACCOUNTS, ensure_seed_data
 
 logger = logging.getLogger(__name__)
 
@@ -48,7 +48,6 @@ ROLE_PORTAL_LABEL: dict[str, str] = {
 class DemoAccount(TypedDict):
     role: str
     email: str
-    password: str
     note: str
 
 
@@ -63,7 +62,6 @@ class PortalOption(TypedDict):
     workspace: list[str]
     pathway: list[str]
     demo_email: str
-    demo_password: str
 
 
 def _demo_email(role_word: str) -> str:
@@ -96,7 +94,6 @@ PORTAL_OPTIONS: list[PortalOption] = [
         ],
         "pathway": ["Verify identity", "Trainee workspace", "Certification"],
         "demo_email": _demo_email("trainee"),
-        "demo_password": DEMO_PASSWORD,
     },
     {
         "role": UserRole.TRAINER.value,
@@ -120,7 +117,6 @@ PORTAL_OPTIONS: list[PortalOption] = [
         ],
         "pathway": ["Verify identity", "Approval check", "Trainer workspace"],
         "demo_email": _demo_email("trainer"),
-        "demo_password": DEMO_PASSWORD,
     },
     {
         "role": UserRole.ADMIN.value,
@@ -144,7 +140,6 @@ PORTAL_OPTIONS: list[PortalOption] = [
         ],
         "pathway": ["Verify identity", "Privilege check", "Control centre"],
         "demo_email": _demo_email("admin"),
-        "demo_password": DEMO_PASSWORD,
     },
 ]
 
@@ -179,13 +174,11 @@ class AuthState(rx.State):
         {
             "role": account["role"],
             "email": account["email"],
-            "password": account["password"],
             "note": account["note"],
         }
         for account in DEMO_ACCOUNTS
     ]
     login_email_prefill: str = ""
-    login_password_prefill: str = ""
 
     portal_options: list[PortalOption] = PORTAL_OPTIONS
     selected_portal: str = UserRole.TRAINEE.value
@@ -322,13 +315,6 @@ class AuthState(rx.State):
         self.reset_link = ""
 
     @rx.event
-    def use_demo_account(self, email: str, password: str):
-        self.login_email_prefill = email
-        self.login_password_prefill = password
-        self.error_message = ""
-        self.success_message = "Demo credentials filled in. Press Sign in."
-
-    @rx.event
     def select_portal(self, role: str):
         if role not in ROLE_HOME:
             role = UserRole.TRAINEE.value
@@ -336,15 +322,7 @@ class AuthState(rx.State):
         self.error_message = ""
         self.success_message = ""
         self.login_email_prefill = ""
-        self.login_password_prefill = ""
         self.show_password = False
-
-    @rx.event
-    def fill_portal_demo(self):
-        option = self.active_portal
-        return AuthState.use_demo_account(
-            option["demo_email"], option["demo_password"]
-        )
 
     @rx.event
     def toggle_password_visibility(self):
@@ -482,7 +460,7 @@ class AuthState(rx.State):
             self.error_message = "Sign in failed. Please try again."
             return
         self.is_loading = False
-        self.login_password_prefill = ""
+        self.login_email_prefill = ""
         self.success_message = f"Welcome back, {self.full_name}."
         return rx.redirect(target)
 

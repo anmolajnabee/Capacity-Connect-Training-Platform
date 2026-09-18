@@ -435,7 +435,7 @@ def portal_login_card() -> rx.Component:
                     "Your password",
                     "key-round",
                     AuthState.password_input_type,
-                    AuthState.login_password_prefill,
+                    "",
                     _password_toggle(),
                 ),
                 _submit_row(),
@@ -443,19 +443,9 @@ def portal_login_card() -> rx.Component:
             ),
             on_submit=AuthState.handle_login,
         ),
-        rx.el.button(
-            rx.icon("wand-sparkles", class_name="h-4 w-4"),
-            rx.el.span(
-                f"Fill seeded {AuthState.active_portal['label']} demo credentials"
-            ),
-            type="button",
-            on_click=AuthState.fill_portal_demo,
-            class_name=(
-                "mt-4 flex w-full items-center justify-center gap-2 rounded-xl border border-dashed "
-                "border-slate-300 bg-[#FBFAF6] px-4 py-2.5 text-xs font-semibold text-slate-700 "
-                "outline-hidden transition-colors hover:border-slate-400 hover:text-[#0A1B33] "
-                "focus-visible:ring-2 focus-visible:ring-[#0A1B33]/30"
-            ),
+        rx.el.p(
+            "Demo access is deployment-managed. Obtain credentials from your administrator.",
+            class_name="mt-4 text-xs font-medium text-slate-600",
         ),
         rx.el.div(
             rx.el.a(

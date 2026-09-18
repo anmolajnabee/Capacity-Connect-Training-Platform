@@ -90,6 +90,15 @@ def _create_form() -> rx.Component:
             "",
             "Single best answer. Attempt all questions within the time limit.",
         ),
+        select_field(
+            "Question order",
+            "shuffle_questions",
+            rx.fragment(
+                rx.el.option("Shuffle for each attempt", value="yes"),
+                rx.el.option("Keep authored order", value="no"),
+            ),
+            "yes",
+        ),
         primary_button("Create draft assessment", type="submit"),
         on_submit=TrainerAssessmentState.create_assessment,
         reset_on_submit=True,
@@ -220,7 +229,8 @@ def _question_card(question) -> rx.Component:
                     on_click=lambda: TrainerAssessmentState.edit_question(
                         question["id"]
                     ),
-                    title="Edit question",
+                    title="Edit question (draft only)",
+                    disabled=TrainerAssessmentState.selected_status != "draft",
                     class_name="flex size-8 items-center justify-center rounded-lg border border-slate-300 bg-white text-slate-600 hover:border-teal-300 hover:text-teal-700",
                 ),
                 rx.el.button(
@@ -228,12 +238,17 @@ def _question_card(question) -> rx.Component:
                     on_click=lambda: TrainerAssessmentState.delete_question(
                         question["id"]
                     ),
-                    title="Remove question",
+                    title="Remove question (draft only)",
+                    disabled=TrainerAssessmentState.selected_status != "draft",
                     class_name="flex size-8 items-center justify-center rounded-lg border border-slate-300 bg-white text-slate-500 hover:border-red-300 hover:text-red-600",
                 ),
                 class_name="flex shrink-0 items-center gap-2",
             ),
             class_name="flex items-start justify-between gap-3",
+        ),
+        rx.el.p(
+            question["competency_label"],
+            class_name="mt-2 text-xs font-semibold text-teal-700",
         ),
         rx.el.div(
             rx.foreach(question["options"], _option_line),
@@ -253,6 +268,24 @@ def _question_card(question) -> rx.Component:
 
 def _question_form() -> rx.Component:
     return rx.el.form(
+        select_field(
+            "Competency (required)",
+            "competency_id",
+            rx.fragment(
+                rx.el.option(
+                    "Select course competency", value="0", disabled=True
+                ),
+                rx.foreach(
+                    TrainerAssessmentState.competency_options,
+                    lambda item: rx.el.option(
+                        item["label"], value=item["id"].to_string()
+                    ),
+                ),
+            ),
+            TrainerAssessmentState.editing_question[
+                "competency_id"
+            ].to_string(),
+        ),
         textarea_field(
             "Question prompt",
             "prompt",
@@ -432,7 +465,14 @@ def trainer_studio_page() -> rx.Component:
                     class_name="flex w-full flex-wrap items-center justify-between gap-3",
                 ),
                 rx.el.div(
-                    _question_form(),
+                    rx.cond(
+                        TrainerAssessmentState.selected_status == "draft",
+                        _question_form(),
+                        rx.el.p(
+                            "Published questions are read-only to preserve official assessment evidence.",
+                            class_name="text-sm font-medium text-slate-600",
+                        ),
+                    ),
                     rx.cond(
                         TrainerAssessmentState.questions.length() > 0,
                         rx.el.div(

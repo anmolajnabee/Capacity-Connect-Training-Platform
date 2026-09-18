@@ -92,12 +92,9 @@ class TraineeCertificationState(rx.State):
     is_submitting: bool = False
 
     async def _uid(self) -> int:
-        from app.states.auth_state import AuthState
+        from app.security import validate_role
 
-        auth = await self.get_state(AuthState)
-        if auth.role != "trainee" or auth.approval_status != "approved":
-            return 0
-        return auth.user_id
+        return await validate_role(self, "trainee")
 
     # ------------------------------------------------------------- computed
     @rx.var
@@ -136,6 +133,14 @@ class TraineeCertificationState(rx.State):
 
     # -------------------------------------------------------------- loading
     async def _evaluate(self, session, uid: int) -> list[ReadinessRow]:
+        active_user = await session.scalar(
+            select(User.id).where(
+                User.id == uid,
+                User.role == "trainee",
+                User.is_active.is_(True),
+                User.approval_status == "approved",
+            )
+        )
         profile_completion = int(
             await session.scalar(
                 select(TraineeProfile.profile_completion).where(
@@ -172,7 +177,13 @@ class TraineeCertificationState(rx.State):
                 await session.scalar(
                     select(func.count())
                     .select_from(ResourceProgress)
+                    .join(
+                        LearningResource,
+                        LearningResource.id == ResourceProgress.resource_id,
+                    )
                     .where(
+                        LearningResource.course_id == course.id,
+                        LearningResource.is_published.is_(True),
                         ResourceProgress.enrollment_id == enrollment.id,
                         ResourceProgress.is_completed.is_(True),
                     )
@@ -228,8 +239,9 @@ class TraineeCertificationState(rx.State):
                     await session.execute(
                         select(CourseAssignment.id).where(
                             CourseAssignment.course_id == course.id,
-                            CourseAssignment.status
-                            == AssignmentStatus.PUBLISHED.value,
+                            CourseAssignment.status.in_(
+                                ["published", "closed"]
+                            ),
                         )
                     )
                 )
@@ -248,7 +260,9 @@ class TraineeCertificationState(rx.State):
                             AssignmentSubmission.assignment_id.in_(
                                 assignment_ids
                             ),
-                            AssignmentSubmission.status != "draft",
+                            AssignmentSubmission.status.in_(
+                                ["submitted", "late", "graded"]
+                            ),
                         )
                     )
                     or 0
@@ -257,12 +271,19 @@ class TraineeCertificationState(rx.State):
                     await session.scalar(
                         select(func.count())
                         .select_from(AssignmentSubmission)
+                        .join(
+                            CourseAssignment,
+                            CourseAssignment.id
+                            == AssignmentSubmission.assignment_id,
+                        )
                         .where(
                             AssignmentSubmission.trainee_id == uid,
                             AssignmentSubmission.assignment_id.in_(
                                 assignment_ids
                             ),
                             AssignmentSubmission.status == "graded",
+                            AssignmentSubmission.marks_awarded
+                            >= CourseAssignment.passing_marks,
                         )
                     )
                     or 0
@@ -275,19 +296,21 @@ class TraineeCertificationState(rx.State):
             )
 
             missing: list[str] = []
+            if not active_user:
+                missing.append(
+                    "An active, approved trainee account is required"
+                )
             if resource_percent < 100:
                 missing.append(
                     f"Complete all {resource_total} learning resources "
                     f"({resource_done} done, {resource_percent}%)"
                 )
-            if assessment_ids and assessments_passed == 0:
+            if assessment_ids and assessments_passed < len(assessment_ids):
+                missing.append("Pass every required official course assessment")
+            if assignments_total and assignments_graded < assignments_total:
                 missing.append(
-                    "Pass at least one course assessment (no passing result on record)"
-                )
-            if assignments_total and assignments_submitted < assignments_total:
-                missing.append(
-                    f"Submit all {assignments_total} published assignments "
-                    f"({assignments_submitted} submitted)"
+                    f"Obtain passing grades for all {assignments_total} required assignments "
+                    f"({assignments_graded} passed)"
                 )
             if profile_completion < MIN_PROFILE_COMPLETION:
                 missing.append(

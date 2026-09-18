@@ -211,7 +211,10 @@ class TrainerCourseState(rx.State):
             await session.execute(
                 select(CourseTrainerAssignment, Course)
                 .join(Course, Course.id == CourseTrainerAssignment.course_id)
-                .where(CourseTrainerAssignment.trainer_id == trainer_id)
+                .where(
+                    CourseTrainerAssignment.trainer_id == trainer_id,
+                    CourseTrainerAssignment.status == "approved",
+                )
                 .order_by(Course.title)
             )
         ).all()

@@ -301,7 +301,11 @@ class AdminCertificationState(rx.State):
         note = self.decision_note.strip()[:MAX_DECISION_NOTE]
         try:
             async with rx.asession() as session:
-                request = await session.get(CertificateRequest, request_id)
+                request = await session.scalar(
+                    select(CertificateRequest)
+                    .where(CertificateRequest.id == request_id)
+                    .with_for_update()
+                )
                 if request is None:
                     self.error_message = "That request no longer exists."
                     return
@@ -393,7 +397,11 @@ class AdminCertificationState(rx.State):
         number = ""
         try:
             async with rx.asession() as session:
-                request = await session.get(CertificateRequest, request_id)
+                request = await session.scalar(
+                    select(CertificateRequest)
+                    .where(CertificateRequest.id == request_id)
+                    .with_for_update()
+                )
                 if request is None:
                     self.error_message = "That request no longer exists."
                     return
@@ -418,12 +426,62 @@ class AdminCertificationState(rx.State):
                         "controlled step."
                     )
                     return
+                actor = await session.scalar(
+                    select(User)
+                    .where(User.id == request.trainee_id)
+                    .with_for_update()
+                )
+                enrollment = await session.scalar(
+                    select(Enrollment)
+                    .where(
+                        Enrollment.course_id == request.course_id,
+                        Enrollment.trainee_id == request.trainee_id,
+                    )
+                    .with_for_update()
+                )
+                if (
+                    actor is None
+                    or not actor.is_active
+                    or actor.role != "trainee"
+                    or actor.approval_status != "approved"
+                    or enrollment is None
+                    or enrollment.status not in {"active", "completed"}
+                ):
+                    self.error_message = "Issuance blocked: current account or enrollment is not eligible."
+                    return
+                from app.states.trainee_certification_state import (
+                    TraineeCertificationState,
+                )
+
+                readiness = await self.get_state(TraineeCertificationState)
+                current = await readiness._evaluate(session, request.trainee_id)
+                target = next(
+                    (
+                        row
+                        for row in current
+                        if row["course_id"] == request.course_id
+                    ),
+                    None,
+                )
+                if target is None or not target["is_eligible"]:
+                    self.error_message = (
+                        "Issuance blocked: completion evidence has changed. "
+                        + (
+                            "; ".join(target["missing"])
+                            if target
+                            else "Enrollment unavailable."
+                        )
+                    )
+                    return
                 certificate = await session.scalar(
                     select(Certificate).where(
                         Certificate.course_id == request.course_id,
                         Certificate.trainee_id == request.trainee_id,
                     )
                 )
+                if certificate is not None:
+                    self.error_message = "A certificate already exists for this trainee and course."
+                    return
                 now = dt.datetime.now(dt.UTC)
                 if certificate is None:
                     number = await self._new_certificate_number(session)
@@ -433,12 +491,8 @@ class AdminCertificationState(rx.State):
                         trainee_id=request.trainee_id,
                         issued_by_id=admin_id,
                         issued_at=now,
-                        final_score=float(request.average_score),
-                        grade=grade_for(float(request.average_score)),
-                        verification_code=(
-                            f"VRF-{uuid.uuid4().hex[:4].upper()}-"
-                            f"{uuid.uuid4().hex[:4].upper()}"
-                        ),
+                        final_score=float(target["best_score"]),
+                        grade=grade_for(float(target["best_score"])),
                     )
                     session.add(certificate)
                     await session.flush()
@@ -450,8 +504,11 @@ class AdminCertificationState(rx.State):
                 request.reviewed_by_id = admin_id
                 request.reviewed_at = now
                 request.decision_note = (
-                    note
-                    or f"Certificate {number} issued against verified evidence."
+                    f"{request.decision_note}\nIssued after live eligibility revalidation: resources "
+                    f"{target['resource_done']}/{target['resource_total']}; assessments "
+                    f"{target['assessments_passed']}/{target['assessments_total']}; assignments "
+                    f"{target['assignments_graded']}/{target['assignments_total']}; "
+                    f"profile {target['profile_completion']}%. {note or number}"
                 )
                 await session.commit()
                 await self._load(session)

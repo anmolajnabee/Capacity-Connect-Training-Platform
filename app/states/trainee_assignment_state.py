@@ -155,12 +155,9 @@ class TraineeAssignmentState(rx.State):
 
     # -------------------------------------------------------------- helpers
     async def _uid(self) -> int:
-        from app.states.auth_state import AuthState
+        from app.security import validate_role
 
-        auth = await self.get_state(AuthState)
-        if auth.role != UserRole.TRAINEE.value or auth.user_id <= 0:
-            return 0
-        return auth.user_id
+        return await validate_role(self, "trainee")
 
     # --------------------------------------------------------------- events
     @rx.event

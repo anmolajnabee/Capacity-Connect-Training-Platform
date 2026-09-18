@@ -4,6 +4,121 @@ from sqlalchemy import select
 from app import models as m
 
 
+def score_to_level(score: float) -> int:
+    """Official rubric v1: >=90:5, >=75:4, >=60:3, >=40:2, otherwise 1."""
+    for threshold, level in ((90, 5), (75, 4), (60, 3), (40, 2)):
+        if score >= threshold:
+            return level
+    return 1
+
+
+def record_official_evidence(session, result_id: int) -> None:
+    """Called only by the server scorer in its locked submission transaction."""
+    import json
+    from sqlalchemy import func
+
+    result = session.get(m.AssessmentResult, result_id)
+    if result is None or not result.is_passed:
+        return
+    assessment = session.get(m.Assessment, result.assessment_id)
+    author = (
+        session.get(m.User, assessment.created_by_id)
+        if assessment and assessment.created_by_id
+        else None
+    )
+    if (
+        author is None
+        or not author.is_active
+        or author.approval_status != "approved"
+        or author.role not in {"trainer", "admin"}
+    ):
+        return
+    attempt = session.get(m.AssessmentAttempt, result.attempt_id)
+    if attempt.status != "graded" or attempt.trainee_id != result.trainee_id:
+        return
+    rows = session.execute(
+        select(
+            m.Question.competency_id,
+            m.Question.id,
+            m.Question.marks,
+            m.AttemptAnswer.marks_awarded,
+        )
+        .join(m.AttemptAnswer, m.AttemptAnswer.question_id == m.Question.id)
+        .where(
+            m.AttemptAnswer.attempt_id == attempt.id,
+            m.Question.assessment_id == assessment.id,
+            m.Question.competency_id.is_not(None),
+        )
+    ).all()
+    grouped = {}
+    for cid, qid, marks, awarded in rows:
+        grouped.setdefault(cid, []).append((qid, float(marks), float(awarded)))
+    moment = dt.datetime.now(dt.UTC)
+    for cid, measurements in grouped.items():
+        total = sum(item[1] for item in measurements)
+        if total <= 0:
+            continue
+        reference = f"result:{result.id}:competency:{cid}:rubric-v1"
+        if session.scalar(
+            select(m.CompetencyEvidence.id).where(
+                m.CompetencyEvidence.user_id == result.trainee_id,
+                m.CompetencyEvidence.competency_id == cid,
+                m.CompetencyEvidence.source_system
+                == "official_question_scoring",
+                m.CompetencyEvidence.source_reference == reference,
+            )
+        ):
+            continue
+        score = 100 * sum(item[2] for item in measurements) / total
+        evidence = m.CompetencyEvidence(
+            user_id=result.trainee_id,
+            competency_id=cid,
+            evidence_type="official_assessment",
+            source_system="official_question_scoring",
+            source_reference=reference,
+            assessment_result_id=result.id,
+            measured_score=score,
+            measured_level=score_to_level(score),
+            verifier_id=author.id,
+            verification_status="verified",
+            observed_at=result.graded_at or moment,
+            verified_at=moment,
+            notes=json.dumps(
+                {
+                    "rubric": ">=90:5; >=75:4; >=60:3; >=40:2; otherwise:1",
+                    "assessment_id": assessment.id,
+                    "result_id": result.id,
+                    "questions": [
+                        {"id": q, "marks": t, "awarded": a}
+                        for q, t, a in measurements
+                    ],
+                }
+            ),
+        )
+        session.add(evidence)
+        session.flush()
+        session.add(
+            m.CompetencyObservation(
+                course_id=assessment.course_id,
+                user_id=result.trainee_id,
+                competency_id=cid,
+                observer_id=author.id,
+                evidence_id=evidence.id,
+                phase="post",
+                observed_level=evidence.measured_level,
+                verification_status="verified",
+                observed_at=moment,
+                verified_at=moment,
+                notes=reference,
+            )
+        )
+    session.flush()
+    refresh_evidence(session, result.trainee_id)
+    from app.services.effectiveness import refresh_effectiveness
+
+    refresh_effectiveness(session, assessment.course_id)
+
+
 def qualifying(e: m.CompetencyEvidence) -> bool:
     return bool(
         e.verification_status == "verified"

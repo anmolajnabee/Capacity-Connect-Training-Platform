@@ -3,6 +3,8 @@
 from __future__ import annotations
 
 import logging
+import hashlib
+from pathlib import Path
 import re
 import secrets
 from typing import Any, TypedDict
@@ -10,7 +12,14 @@ from typing import Any, TypedDict
 import reflex as rx
 from sqlalchemy import select
 
-from app.models import Course, LearningResource, ResourceType
+from app.models import (
+    Course,
+    LearningResource,
+    ResourceType,
+    AssignmentSubmission,
+    Certificate,
+)
+from app.security import validate_resource_content, valid_resource_url
 from app.states.trainer_state import trainer_course_ids, trainer_guard
 
 logger = logging.getLogger(__name__)
@@ -18,21 +27,16 @@ logger = logging.getLogger(__name__)
 MAX_UPLOAD_BYTES = 50 * 1024 * 1024
 EXTENSION_TYPES: dict[str, str] = {
     ".mp4": ResourceType.VIDEO.value,
-    ".mov": ResourceType.VIDEO.value,
     ".webm": ResourceType.VIDEO.value,
-    ".mkv": ResourceType.VIDEO.value,
     ".pdf": ResourceType.DOCUMENT.value,
-    ".doc": ResourceType.DOCUMENT.value,
     ".docx": ResourceType.DOCUMENT.value,
     ".txt": ResourceType.DOCUMENT.value,
     ".md": ResourceType.DOCUMENT.value,
-    ".ppt": ResourceType.SLIDES.value,
     ".pptx": ResourceType.SLIDES.value,
     ".csv": ResourceType.DATASET.value,
     ".xlsx": ResourceType.DATASET.value,
-    ".zip": ResourceType.DATASET.value,
 }
-ALLOWED_TEXT = "MP4, MOV, WEBM, MKV, PDF, DOC/DOCX, TXT, MD, PPT/PPTX, CSV, XLSX, ZIP · max 50 MB"
+ALLOWED_TEXT = "PDF, MP4, WebM, TXT, Markdown, CSV, DOCX, PPTX, XLSX · max 50 MB · content validated"
 
 
 class ResourceRow(TypedDict):
@@ -69,7 +73,7 @@ def safe_file_name(name: str) -> str:
     stem, _, suffix = base.rpartition(".")
     stem = re.sub(r"[^A-Za-z0-9_.-]+", "-", stem or base).strip("-")[:60]
     suffix = re.sub(r"[^A-Za-z0-9]+", "", suffix).lower()
-    token = secrets.token_hex(4)
+    token = secrets.token_hex(16)
     return (
         f"{stem or 'resource'}-{token}.{suffix}"
         if suffix
@@ -88,6 +92,18 @@ class TrainerResourceState(rx.State):
     total_resources: int = 0
     published_count: int = 0
     pending_file: str = ""
+    _staged_file: str = ""
+    _staged_owner: int = 0
+
+    async def _remove_unreferenced(self, session, filename: str) -> None:
+        if not filename or Path(filename).name != filename:
+            return
+        for model in (LearningResource, AssignmentSubmission, Certificate):
+            if await session.scalar(
+                select(model.id).where(model.file_name == filename).limit(1)
+            ):
+                return
+        (rx.get_upload_dir() / filename).unlink(missing_ok=True)
 
     @rx.var
     def allowed_hint(self) -> str:
@@ -214,7 +230,7 @@ class TrainerResourceState(rx.State):
                     f"Unsupported file type. Allowed: {ALLOWED_TEXT}."
                 )
                 return
-            data = await upload.read()
+            data = await upload.read(MAX_UPLOAD_BYTES + 1)
             if len(data) == 0:
                 self.is_uploading = False
                 self.error_message = "The selected file is empty."
@@ -223,6 +239,10 @@ class TrainerResourceState(rx.State):
                 self.is_uploading = False
                 self.error_message = "File exceeds the 50 MB upload limit."
                 return
+            validate_resource_content(data, suffix)
+            if self._staged_file:
+                async with rx.asession() as session:
+                    await self._remove_unreferenced(session, self._staged_file)
             upload_dir = rx.get_upload_dir()
             upload_dir.mkdir(parents=True, exist_ok=True)
             stored = safe_file_name(original)
@@ -235,15 +255,28 @@ class TrainerResourceState(rx.State):
             return
         self.is_uploading = False
         self.pending_file = stored
+        self._staged_file = stored
+        self._staged_owner = trainer_id
         self.success_message = (
             f"File staged as {stored}. Complete the details and publish it."
         )
 
     @rx.event
-    def clear_pending_file(self):
-        self.pending_file = ""
-        self.error_message = ""
-        self.success_message = ""
+    async def clear_pending_file(self):
+        try:
+            trainer_id = await trainer_guard(self)
+            if not trainer_id or self._staged_owner != trainer_id:
+                return
+            async with rx.asession() as session:
+                await self._remove_unreferenced(session, self._staged_file)
+            self.pending_file = ""
+            self._staged_file = ""
+            self._staged_owner = 0
+            self.error_message = ""
+            self.success_message = "Staged file discarded."
+        except Exception as e:
+            logging.exception(f"Error: {type(e).__name__}")
+            self.error_message = "Could not discard the staged file. Retry."
 
     @rx.event
     async def create_resource(self, form_data: dict[str, Any]):
@@ -264,7 +297,15 @@ class TrainerResourceState(rx.State):
         if not module:
             self.error_message = "Assign the resource to a module."
             return
-        if not self.pending_file and not external_url:
+        if external_url and not valid_resource_url(external_url):
+            self.error_message = "Use an HTTPS link with a valid host, no embedded credentials, and at most 500 characters."
+            return
+        if self._staged_file and self._staged_owner != trainer_id:
+            self.error_message = (
+                "Stage the file again under your current account."
+            )
+            return
+        if not self._staged_file and not external_url:
             self.error_message = (
                 "Upload a file or provide an external link for this resource."
             )
@@ -287,12 +328,22 @@ class TrainerResourceState(rx.State):
                 ):
                     self.error_message = "You are not assigned to that course."
                     return
+                content_type, byte_size, digest = "", 0, ""
+                if self._staged_file:
+                    data = (
+                        rx.get_upload_dir() / self._staged_file
+                    ).read_bytes()
+                    content_type = validate_resource_content(
+                        data, Path(self._staged_file).suffix
+                    )
+                    byte_size = len(data)
+                    digest = hashlib.sha256(data).hexdigest()
                 resource_type = (
                     EXTENSION_TYPES.get(
-                        f".{self.pending_file.rsplit('.', 1)[-1].lower()}",
+                        f".{self._staged_file.rsplit('.', 1)[-1].lower()}",
                         ResourceType.DOCUMENT.value,
                     )
-                    if self.pending_file
+                    if self._staged_file
                     else ResourceType.LINK.value
                 )
                 last = await session.scalar(
@@ -313,7 +364,10 @@ class TrainerResourceState(rx.State):
                         ).strip(),
                         resource_type=resource_type,
                         module_name=module,
-                        file_name=self.pending_file,
+                        file_name=self._staged_file,
+                        content_type=content_type,
+                        file_size_bytes=byte_size,
+                        sha256_digest=digest,
                         external_url=external_url,
                         duration_minutes=minutes,
                         sort_order=int(last or 0) + 1,
@@ -328,15 +382,16 @@ class TrainerResourceState(rx.State):
             self.error_message = "Could not save the resource metadata."
             return
         self.pending_file = ""
+        self._staged_file = ""
+        self._staged_owner = 0
         self.success_message = f"Resource saved: {title}."
 
     async def _owned(self, session, resource_id: int, trainer_id: int):
         resource = await session.get(LearningResource, resource_id)
         if resource is None:
             return None
-        if resource.uploaded_by_id != trainer_id and (
-            resource.course_id
-            not in await trainer_course_ids(session, trainer_id)
+        if resource.course_id not in await trainer_course_ids(
+            session, trainer_id
         ):
             return None
         return resource
@@ -383,8 +438,10 @@ class TrainerResourceState(rx.State):
                         "Only the uploading trainer can delete this resource."
                     )
                     return
+                filename = resource.file_name
                 await session.delete(resource)
                 await session.commit()
+                await self._remove_unreferenced(session, filename)
                 await self._load(session, trainer_id)
         except Exception as exception:
             logging.exception(f"Error deleting resource: {exception}")

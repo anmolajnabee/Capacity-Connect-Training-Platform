@@ -32,7 +32,6 @@ Names and purposes only are listed here; no values belong in this document.
 
 - `REFLEX_DB_URL`, `REFLEX_ASYNC_DB_URL`, `DATABASE_URL`: managed database URL aliases used by the application/runtime.
 - `CC_SESSION_SECRET`: optional dedicated server-side session-signing secret. When absent, the application derives a signing key from the managed-database configuration as a fallback; this does not resolve the client-managed cookie limitation.
-- `CAPACITY_CONNECT_DEMO_PASSWORD`: explicitly configured password source for isolated demo seeding and authorized demo access.
 - `GOOGLE_API_KEY`: provider credential for CAPACITY AI.
 - `GEMINI_BASE_URL`: optional Gemini-compatible endpoint override.
 - `RESEND_API_KEY`: provider credential for outbound notification transport.
@@ -49,7 +48,7 @@ Managed PostgreSQL is provisioned by the hosting/project workflow. ORM models in
 
 ## Seed and repair process
 
-The seed process is idempotent and requires an explicitly configured `CAPACITY_CONNECT_DEMO_PASSWORD`; it must not invent, print or store a password in frontend metadata. Demo records are created only when the user database is empty. The normalized v2 repair is also idempotent and is intended to repair or normalize the isolated demonstration baseline without duplicating records. Production data must never be reset or reseeded for a demo. Seeding is not an undo mechanism for attempts, grades, evidence, allocations or certificates; use an authorized disposable database or restored baseline for rehearsal.
+The seed process is idempotent. The three exact demonstration actors use the fixed demonstration-only shared password `Demo@1234`: `admin@capacityconnect.gov`, `trainer@capacityconnect.gov` and `trainee@capacityconnect.gov`. Reconciliation changes only those exact email addresses and does not modify normal users. It must not invent, print or store a password in frontend metadata. Demo records are created only when the user database is empty. The normalized v2 repair is also idempotent and is intended to repair or normalize the isolated demonstration baseline without duplicating records. Production data must never be reset or reseeded for a demo. Seeding is not an undo mechanism for attempts, grades, evidence, allocations or certificates; use an authorized disposable database or restored baseline for rehearsal.
 
 ## Local run guidance
 
@@ -80,7 +79,7 @@ Production must configure `CC_PRIVATE_UPLOAD_DIR` to durable non-public storage 
 
 ## Demo accounts and guide
 
-The isolated demonstration actors and role-specific navigation are documented in [`CAPACITY_CONNECT_DEMO_GUIDE.md`](CAPACITY_CONNECT_DEMO_GUIDE.md). The guide intentionally names account identifiers but never publishes password values, session values, recovery links or certificate tokens. Obtain the demo password only from the authorized demo administrator through `CAPACITY_CONNECT_DEMO_PASSWORD`, use separate browser profiles, and never rehearse against production.
+The isolated demonstration actors and role-specific navigation are documented in [`CAPACITY_CONNECT_DEMO_GUIDE.md`](CAPACITY_CONNECT_DEMO_GUIDE.md). The fixed shared credential `Demo@1234` is intentionally public in the demo sign-in UI and is for demonstration access only. It must never be used for production accounts or private records. The guide names the exact account identifiers but never exposes sessions, recovery links or certificate tokens. Use separate browser profiles, and never rehearse against production.
 
 ## Concise eleven-step demo flow
 

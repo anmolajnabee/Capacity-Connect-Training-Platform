@@ -14,7 +14,7 @@ Existing role email identifiers:
 | Dr. Raj Sharma | Trainer | trainer@capacityconnect.gov |
 | Anmol Kumar | Trainee / Weather Forecaster | trainee@capacityconnect.gov |
 
-Passwords are supplied only through deployment-managed `CAPACITY_CONNECT_DEMO_PASSWORD` and must be obtained from the authorized demo administrator. No password value is included here. Do not display passwords, session values, recovery links or verification token values on slides or in logs. Do not assume reseeding rotates an existing account's password; have the authorized administrator validate access beforehand.
+Shared demonstration password: `Demo@1234` for all three listed demo accounts. This fixed credential is intentionally public in the demo sign-in UI and is demonstration-only; never use it for production accounts or private records. Do not expose sessions, recovery links or certificate/verification token values on slides or in logs. Do not assume reseeding rotates an existing account's password; have the authorized administrator validate access beforehand.
 
 Use separate browser profiles for each role to avoid confusing session state. Confirm current course dates, trainer availability, approval/activity, enrollment, assessment deadline and attempts before the rehearsal. A historical eligible fit evaluation does not guarantee current availability.
 

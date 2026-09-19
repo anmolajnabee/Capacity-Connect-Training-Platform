@@ -443,9 +443,21 @@ def portal_login_card() -> rx.Component:
             ),
             on_submit=AuthState.handle_login,
         ),
-        rx.el.p(
-            "Demo access is deployment-managed. Obtain credentials from your administrator.",
-            class_name="mt-4 text-xs font-medium text-slate-600",
+        rx.el.div(
+            rx.icon("key-round", class_name="h-4 w-4 shrink-0 text-amber-700"),
+            rx.el.p(
+                rx.el.span(
+                    "Demo password", class_name="font-semibold text-slate-700"
+                ),
+                rx.el.span(
+                    ": Demo@1234",
+                    class_name="ml-1 font-semibold tracking-wide text-[#0A1B33]",
+                ),
+                class_name="text-xs font-medium text-slate-600",
+            ),
+            role="note",
+            aria_label="Demo access password",
+            class_name="mt-4 flex items-center gap-2 rounded-xl border border-amber-300/70 bg-amber-50 px-3 py-2",
         ),
         rx.el.div(
             rx.el.a(

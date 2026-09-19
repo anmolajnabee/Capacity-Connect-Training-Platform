@@ -52,11 +52,11 @@ from app.models import (
     UserSkill,
     WorkExperience,
 )
-from app.security import hash_password
+from app.security import hash_password, verify_password
 
 logger = logging.getLogger(__name__)
 
-DEMO_PASSWORD = os.environ.get("CAPACITY_CONNECT_DEMO_PASSWORD", "Demo@123")
+DEMO_ACCESS_PASSWORD = "Demo@1234"
 
 DEMO_ACCOUNTS: list[dict[str, str]] = [
     {
@@ -92,11 +92,7 @@ def _make_user(
     phone: str = "",
     seed: str = "",
 ) -> User:
-    password = DEMO_PASSWORD
-    if not password.strip():
-        raise ValueError(
-            "Demo account creation requires an explicitly configured password."
-        )
+    password = DEMO_ACCESS_PASSWORD
     password_hash, salt = hash_password(password)
     return User(
         email=email,
@@ -113,6 +109,29 @@ def _make_user(
     )
 
 
+def _reconcile_demo_access(session) -> None:
+    """Repair only the three published demo credentials when needed."""
+    demo_emails = [account["email"] for account in DEMO_ACCOUNTS]
+    users = session.scalars(
+        select(User).where(User.email.in_(demo_emails))
+    ).all()
+    changed = False
+    for user in users:
+        if verify_password(
+            DEMO_ACCESS_PASSWORD, user.password_hash, user.password_salt
+        ):
+            continue
+        password_hash, salt = hash_password(DEMO_ACCESS_PASSWORD)
+        user.password_hash = password_hash
+        user.password_salt = salt
+        user.password_updated_at = dt.datetime.now(dt.UTC)
+        user.failed_login_count = 0
+        user.locked_until = None
+        changed = True
+    if changed:
+        session.commit()
+
+
 def ensure_seed_data() -> None:
     """Populate demo content exactly once; safe to call on every page load."""
     global _seed_done
@@ -124,14 +143,13 @@ def ensure_seed_data() -> None:
                 )
                 if (
                     existing is None
-                    and os.environ.get(
-                        "CAPACITY_CONNECT_DEMO_PASSWORD", ""
-                    ).strip()
                     and session.scalar(select(User.id).limit(1)) is None
                 ):
                     _seed_everything(session)
                     session.commit()
                     logger.info("CAPACITY CONNECT demo data seeded.")
+                else:
+                    _reconcile_demo_access(session)
             _seed_done = True
         except Exception as exception:
             logging.exception(f"Error seeding demo data: {exception}")

@@ -25,7 +25,7 @@ from app.services.private_files import (
     write_private,
 )
 from app.models import Certificate
-from app.seed import DEMO_ACCOUNTS
+from app.seed import DEMO_ACCESS_PASSWORD, DEMO_ACCOUNTS
 from app.states import auth_state
 from app.states.auth_state import PORTAL_OPTIONS
 
@@ -140,9 +140,21 @@ class EvidenceAndTokenTests(unittest.TestCase):
         ):
             self.assertEqual(score_to_level(score), level)
 
+    def test_demo_access_password_is_server_side_and_exact(self):
+        self.assertEqual(DEMO_ACCESS_PASSWORD, "Demo@1234")
+
     def test_demo_catalog_has_no_secrets(self):
+        expected = {
+            "trainee@capacityconnect.gov",
+            "trainer@capacityconnect.gov",
+            "admin@capacityconnect.gov",
+        }
+        emails = [account["email"] for account in DEMO_ACCOUNTS]
+        self.assertEqual(set(emails), expected)
+        self.assertEqual(len(emails), len(expected))
         for account in DEMO_ACCOUNTS:
             self.assertEqual(set(account), {"role", "email", "note"})
+            self.assertNotIn(DEMO_ACCESS_PASSWORD, account.values())
 
     def test_portal_and_demo_catalogs_have_no_password_keys(self):
         for name, catalog in (
@@ -164,8 +176,11 @@ class EvidenceAndTokenTests(unittest.TestCase):
                         elif isinstance(value, (list, tuple)):
                             pending.extend(value)
 
-    def test_auth_source_has_no_demo_password_symbols(self):
+    def test_auth_state_has_no_password_field_or_demo_value(self):
         source = inspect.getsource(auth_state)
+        self.assertNotIn('"password":', source)
+        self.assertNotIn("'password':", source)
+        self.assertNotIn(DEMO_ACCESS_PASSWORD, source)
         self.assertNotIn("DEMO_PASSWORD", source)
         self.assertNotIn("demo_password", source)
 

@@ -12,15 +12,15 @@ This report records actual execution evidence supplied in this session, includin
 |---|---:|---:|---:|---:|---:|---|
 | Baseline | 24 | 23 | 1 | 0 | 0 | Successful baseline; skipped test included in total |
 | Intermediate demo-catalog run | 35 | 33 | 1 | 1 | 0 | Historical failed run: one test was skipped and one demo-catalog assertion failed because account metadata still exposed a password field; repaired before final suite |
-| Final post-repair | 47 | 46 | 1 | 0 | 0 | Successful final suite; disposable-database email test still skipped |
+| Final post-repair | 48 | 47 | 1 | 0 | 0 | Successful final suite; disposable-database email test still skipped |
 
-The baseline runner reported approximately 0.090 seconds. Historical intermediate runs reported approximately 0.090–0.091 seconds. The final supplied run reported 47 total, 46 passed, 1 skipped, 0 failures and 0 errors. These short unit/contract runs do not establish end-to-end application speed.
+The baseline runner reported approximately 0.090 seconds. Historical intermediate runs reported approximately 0.090–0.091 seconds. The final supplied run reported 48 total, 47 passed, 1 skipped, 0 failures and 0 errors. These short unit/contract runs do not establish end-to-end application speed.
 
-The historical 35-test run comprised **33 passed, 1 skipped, 1 failure and 0 errors**. The failure was the demo-catalog assertion because account metadata still exposed a password field; the skipped test was not run and is not counted as passed. After repair, the same assertion passed, and the final supplied 47-test suite had **46 passed, 1 skipped, 0 failures and 0 errors**. Thus, “no failures” applies to the baseline and final successful runs, not every historical experiment.
+The historical 35-test run comprised **33 passed, 1 skipped, 1 failure and 0 errors**. The failure was the demo-catalog assertion because account metadata still exposed a password field; the skipped test was not run and is not counted as passed. After repair, the same assertion passed, and the final supplied 48-test suite had **47 passed, 1 skipped, 0 failures and 0 errors**. Thus, “no failures” applies to the baseline and final successful runs, not every historical experiment.
 
 ### Final supplied suite result
 
-The final suite is **47 total: 46 passed, 1 skipped, 0 failures, 0 errors**. The skipped disposable-database email scope/duplicates/deadlines/admin-guards test remains historical and is not counted as passed. The final repair coverage additionally verifies private resource storage round trips, bounded filenames and paths, 50 MB read/write limits, fresh role-scoped download authorization, no frontend stored filenames, removal of direct `rx.get_upload_url`, and separation of resource completion from certificate issuance.
+The final suite is **48 total: 47 passed, 1 skipped, 0 failures, 0 errors**. A passing regression check confirms that the exact server-side demo password exists while catalogs and reactive auth state contain no password field or password value. The skipped disposable-database email scope/duplicates/deadlines/admin-guards test remains historical and is not counted as passed. The final repair coverage additionally verifies private resource storage round trips, bounded filenames and paths, 50 MB read/write limits, fresh role-scoped download authorization, no frontend stored filenames, removal of direct `rx.get_upload_url`, and separation of resource completion from certificate issuance.
 
 Resource completion now recalculates progress/completion only. Certification proceeds through trainee readiness/request and administrator approve/issue with live eligibility revalidation.
 
